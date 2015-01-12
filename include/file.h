@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
-#include "str.h"
+#include "misc.h"
 #include "tinyformat.h"
 
 inline const char *GetHighestSize(unsigned long long int &size)
