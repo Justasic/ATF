@@ -30,8 +30,6 @@
 #include <queue>
 #include <arpa/inet.h>
 
-// #include "extern.h"
-#include "thread.h"
 #include "SocketException.h"
 #include "log.h"
 
@@ -41,94 +39,80 @@ extern Flux::string GetPeerIP(int);
  */
 union sockaddrs
 {
-  sockaddr sa;
-  sockaddr_in sa4;
-  sockaddr_in6 sa6;
+	sockaddr sa;
+	sockaddr_in sa4;
+	sockaddr_in6 sa6;
 
-  /** Construct the object, sets everything to 0
-   */
-  sockaddrs(const Flux::string &address = "");
+	/** Construct the object, sets everything to 0
+	*/
+	sockaddrs(const Flux::string &address = "");
 
-  /** Memset the object to 0
-   */
-  void clear();
+	/** Memset the object to 0
+	*/
+	void clear();
 
-  /** Get the size of the sockaddr we represent
-   * @return The size
-   */
-  size_t size() const;
+	/** Get the size of the sockaddr we represent
+	* @return The size
+	*/
+	size_t size() const;
 
-  /** Get the port represented by this addr
-   * @return The port, or -1 on fail
-   */
-  int port() const;
+	/** Get the port represented by this addr
+	* @return The port, or -1 on fail
+	*/
+	int port() const;
 
-  /** Get the address represented by this addr
-   * @return The address
-   */
-  Flux::string addr() const;
+	/** Get the address represented by this addr
+	* @return The address
+	*/
+	Flux::string addr() const;
 
-  /** Check if this sockaddr has data in it
-   */
-  bool operator()() const;
+	/** Check if this sockaddr has data in it
+	*/
+	bool operator()() const;
 
-  /** Compares with sockaddr with another. Compares address type, port, and address
-   * @return true if they are the same
-   */
-  bool operator==(const sockaddrs &other) const;
-  /* The same as above but not */
-  inline bool operator!=(const sockaddrs &other) const { return !(*this == other); }
+	/** Compares with sockaddr with another. Compares address type, port, and address
+	* @return true if they are the same
+	*/
+	bool operator==(const sockaddrs &other) const;
+	/* The same as above but not */
+	inline bool operator!=(const sockaddrs &other) const { return !(*this == other); }
 
-  /** The equivalent of inet_pton
-   * @param type AF_INET or AF_INET6
-   * @param address The address to place in the sockaddr structures
-   * @param pport An option port to include in the  sockaddr structures
-   * @throws A socket exception if given invalid IPs
-   */
-  void pton(int type, const Flux::string &address, int pport = 0);
+	/** The equivalent of inet_pton
+	* @param type AF_INET or AF_INET6
+	* @param address The address to place in the sockaddr structures
+	* @param pport An option port to include in the  sockaddr structures
+	* @throws A socket exception if given invalid IPs
+	*/
+	void pton(int type, const Flux::string &address, int pport = 0);
 
-  /** The equivalent of inet_ntop
-   * @param type AF_INET or AF_INET6
-   * @param address The in_addr or in_addr6 structure
-   * @throws A socket exception if given an invalid structure
-   */
-  void ntop(int type, const void *src);
+	/** The equivalent of inet_ntop
+	* @param type AF_INET or AF_INET6
+	* @param address The in_addr or in_addr6 structure
+	* @throws A socket exception if given an invalid structure
+	*/
+	void ntop(int type, const void *src);
 };
 
 class cidr
 {
-  sockaddrs addr;
-  Flux::string cidr_ip;
-  unsigned char cidr_len;
+	sockaddrs addr;
+	Flux::string cidr_ip;
+	unsigned char cidr_len;
 public:
-  cidr(const Flux::string &ip);
-  cidr(const Flux::string &ip, unsigned char len);
-  Flux::string mask() const;
-  bool match(sockaddrs &other);
-};
-
-class SocketException : public CoreException
-{
-public:
-  /** Default constructor for socket exceptions
-   * @param message Error message
-   */
-  SocketException(const Flux::string &message) : CoreException(message) { }
-
-  /** Default destructor
-   * @throws Nothing
-   */
-  virtual ~SocketException() throw() { }
+	cidr(const Flux::string &ip);
+	cidr(const Flux::string &ip, unsigned char len);
+	Flux::string mask() const;
+	bool match(sockaddrs &other);
 };
 
 enum SocketFlag
 {
-  SF_DEAD,
-  SF_WRITABLE,
-  SF_CONNECTING,
-  SF_CONNECTED,
-  SF_ACCEPTING,
-  SF_ACCEPTED
+	SF_DEAD,
+	SF_WRITABLE,
+	SF_CONNECTING,
+	SF_CONNECTED,
+	SF_ACCEPTING,
+	SF_ACCEPTED
 };
 
 class Socket;
@@ -136,248 +120,299 @@ class ClientSocket;
 class ListenSocket;
 class ConnectionSocket;
 
+/**********************************************************************/
+
+class SocketEngine
+{
+public:
+	/* Map of sockets */
+	static std::map<int, Socket *> Sockets;
+
+	/** Called to initialize the socket engine
+	 */
+	static void Initialize();
+
+	/** Called to shutdown the socket engine
+	 */
+	static void Shutdown();
+
+	/** Add a socket to the internal list
+	 * @param s The socket
+	 */
+	static void AddSocket(Socket *s);
+
+	/** Delete a socket from the internal list
+	 * @param s The socket
+	 */
+	static void DelSocket(Socket *s);
+
+	/** Mark a socket as writeable
+	 * @param s The socket
+	 */
+	static void MarkWritable(Socket *s);
+
+	/** Unmark a socket as writeable
+	 * @param s The socket
+	 */
+	static void ClearWritable(Socket *s);
+
+	/** Read from sockets and do things
+	 * @param fast Process the sockets without the normal iteration blocking
+	 */
+	static void Process(bool fast = false);
+};
+
+/**********************************************************************/
+
 class SocketIO
 {
 public:
-  /** Receive something from the buffer
-   * @param s The socket
-   * @param buf The buf to read to
-   * @param sz How much to read
-   * @return Number of bytes received
-   */
-  virtual int Recv(Socket *s, char *buf, size_t sz);
+	/** Receive something from the buffer
+	* @param s The socket
+	* @param buf The buf to read to
+	* @param sz How much to read
+	* @return Number of bytes received
+	*/
+	virtual int Recv(Socket *s, char *buf, size_t sz);
 
-  /** Write something to the socket
-   * @param s The socket
-   * @param buf The data to write
-   * @param size The length of the data
-   */
-  virtual int Send(Socket *s, const char *buf, size_t sz);
-  int Send(Socket *s, const Flux::string &buf);
+	/** Write something to the socket
+	* @param s The socket
+	* @param buf The data to write
+	* @param size The length of the data
+	*/
+	virtual int Send(Socket *s, const char *buf, size_t sz);
+	int Send(Socket *s, const Flux::string &buf);
 
-  /** Accept a connection from a socket
-   * @param s The socket
-   * @return The new socket
-   */
-  virtual ClientSocket *Accept(ListenSocket *s);
+	/** Accept a connection from a socket
+	* @param s The socket
+	* @return The new socket
+	*/
+	virtual ClientSocket *Accept(ListenSocket *s);
 
-  /** Finished accepting a connection from a socket
-   * @param s The socket
-   * @return SF_ACCEPTED if accepted, SF_ACCEPTING if still in process, SF_DEAD on error
-   */
-  virtual SocketFlag FinishAccept(ClientSocket *cs);
+	/** Finished accepting a connection from a socket
+	* @param s The socket
+	* @return SF_ACCEPTED if accepted, SF_ACCEPTING if still in process, SF_DEAD on error
+	*/
+	virtual SocketFlag FinishAccept(ClientSocket *cs);
 
-  /** Bind a socket
-   * @param s The socket
-   * @param ip The IP to bind to
-   * @param port The optional port to bind to
-   */
-  virtual void Bind(Socket *s, const Flux::string &ip, int port = 0);
+	/** Bind a socket
+	* @param s The socket
+	* @param ip The IP to bind to
+	* @param port The optional port to bind to
+	*/
+	virtual void Bind(Socket *s, const Flux::string &ip, int port = 0);
 
-  /** Connect the socket
-   * @param s The socket
-   * @param target IP to connect to
-   * @param port to connect to
-   */
-  virtual void Connect(ConnectionSocket *s, const Flux::string &target, int port);
+	/** Connect the socket
+	* @param s The socket
+	* @param target IP to connect to
+	* @param port to connect to
+	*/
+	virtual void Connect(ConnectionSocket *s, const Flux::string &target, int port);
 
-  /** Called to potentially finish a pending connection
-   * @param s The socket
-   * @return SF_CONNECTED on success, SF_CONNECTING if still pending, and SF_DEAD on error.
-   */
-  virtual SocketFlag FinishConnect(ConnectionSocket *s);
+	/** Called to potentially finish a pending connection
+	* @param s The socket
+	* @return SF_CONNECTED on success, SF_CONNECTING if still pending, and SF_DEAD on error.
+	*/
+	virtual SocketFlag FinishConnect(ConnectionSocket *s);
 
-  /** Called when the socket is destructing
-   */
-  virtual void Destroy() { }
+	/** Called when the socket is destructing
+	*/
+	virtual void Destroy() { }
 };
 
 class Socket
 {
 protected:
-  /* Socket FD */
-  int Sock;
-  /* Is this socket dead? */
-  bool isdead;
-  /* Is this an IPv6 socket? */
-  bool IPv6;
-  /* Other Booleans */
-  bool isconnecting, isconnected, isaccepting, isaccepted, iswritable;
+	/* Socket FD */
+	int Sock;
+	/* Is this socket dead? */
+	bool isdead;
+	/* Is this an IPv6 socket? */
+	bool IPv6;
+	/* Other Booleans */
+	bool isconnecting, isconnected, isaccepting, isaccepted, iswritable;
 
 public:
-  /* Sockaddrs for bind() (if it's bound) */
-  sockaddrs bindaddr;
+	/* Sockaddrs for bind() (if it's bound) */
+	sockaddrs bindaddr;
 
-  /* I/O functions used for this socket */
-  SocketIO *IO;
+	/* I/O functions used for this socket */
+	SocketIO *IO;
 
-  /** Empty constructor, should not be called.
-   */
-  Socket();
+	/** Empty constructor, should not be called.
+	*/
+	Socket();
 
-  /** Default constructor
-   * @param sock The socket to use, -1 if we need to create our own
-   * @param ipv6 true if using ipv6
-   * @param type The socket type, defaults to SOCK_STREAM
-   */
-  Socket(int sock, bool ipv6 = false, int type = SOCK_STREAM);
+	/** Default constructor
+	* @param sock The socket to use, -1 if we need to create our own
+	* @param ipv6 true if using ipv6
+	* @param type The socket type, defaults to SOCK_STREAM
+	*/
+	Socket(int sock, bool ipv6 = false, int type = SOCK_STREAM);
 
-  /** Default destructor
-   */
-  virtual ~Socket();
+	/** Default destructor
+	*/
+	virtual ~Socket();
 
-  /** Get the socket FD for this socket
-   * @return the fd
-   */
-  int GetFD() const;
+	/** Get the socket FD for this socket
+	* @return the fd
+	*/
+	int GetFD() const;
 
-  /** Set the socket as being dead
-   * @param bool boolean if the socket is dead
-   */
-  void SetDead(bool);
-  bool IsDead() const;
+	/** Set the socket as being dead
+	* @param bool boolean if the socket is dead
+	*/
+	void SetDead(bool);
+	bool IsDead() const;
 
-  void SetStatus(SocketFlag, bool);
-  bool GetStatus(SocketFlag) const;
+	void SetStatus(SocketFlag, bool);
+	bool GetStatus(SocketFlag) const;
 
-  /** Check if this socket is IPv6
-   * @return true or false
-   */
-  bool IsIPv6() const;
+	/** Check if this socket is IPv6
+	* @return true or false
+	*/
+	bool IsIPv6() const;
 
-  /** Mark a socket as blockig
-   * @return true if the socket is now blocking
-   */
-  bool SetBlocking();
+	/** Mark a socket as blockig
+	* @return true if the socket is now blocking
+	*/
+	bool SetBlocking();
 
-  /** Mark a socket as non-blocking
-   * @return true if the socket is now non-blocking
-   */
-  bool SetNonBlocking();
+	/** Mark a socket as non-blocking
+	* @return true if the socket is now non-blocking
+	*/
+	bool SetNonBlocking();
 
-  /** Bind the socket to an ip and port
-   * @param ip The ip
-   * @param port The port
-   */
-  void Bind(const Flux::string &ip, int port = 0);
+	/** Bind the socket to an ip and port
+	* @param ip The ip
+	* @param port The port
+	*/
+	void Bind(const Flux::string &ip, int port = 0);
 
-  /** Called when there either is a read or write event.
-   * @return true to continue to call ProcessRead/ProcessWrite, false to not continue
-   */
-  virtual bool Process();
+	/** Called when there either is a read or write event.
+	* @return true to continue to call ProcessRead/ProcessWrite, false to not continue
+	*/
+	virtual bool Process();
 
-  /** Called when there is something to be received for this socket
-   * @return true on success, false to drop this socket
-   */
-  virtual bool ProcessRead();
+	/** Called when there is something to be received for this socket
+	* @return true on success, false to drop this socket
+	*/
+	virtual bool ProcessRead();
 
-  /** Called when the socket is ready to be written to
-   * @return true on success, false to drop this socket
-   */
-  virtual bool ProcessWrite();
+	/** Called when the socket is ready to be written to
+	* @return true on success, false to drop this socket
+	*/
+	virtual bool ProcessWrite();
 
-  /** Called when there is an error for this socket
-   * @return true on success, false to drop this socket
-   */
-  virtual void ProcessError();
+	/** Called when there is an error for this socket
+	* @return true on success, false to drop this socket
+	*/
+	virtual void ProcessError();
 };
 
 class BufferedSocket : public virtual Socket
 {
 protected:
-  /* Things to be written to the socket */
-  Flux::string WriteBuffer;
-  /* Part of a message sent from the server, but not totally received */
-  Flux::string extrabuf;
-  /* How much data was received from this socket */
-  int RecvLen;
+	/* Things to be written to the socket */
+	Flux::string WriteBuffer;
+	/* Part of a message sent from the server, but not totally received */
+	Flux::string extrabuf;
+	/* How much data was received from this socket */
+	int RecvLen;
 
 public:
-  /** Constructor
-   */
-  BufferedSocket();
+	/** Constructor
+	*/
+	BufferedSocket();
 
-  /** Default destructor
-   */
-  virtual ~BufferedSocket();
+	/** Default destructor
+	*/
+	virtual ~BufferedSocket();
 
-  /** Called when there is something to be received for this socket
-   * @return true on success, false to drop this socket
-   */
-  bool ProcessRead();
+	/** Called when there is something to be received for this socket
+	* @return true on success, false to drop this socket
+	*/
+	bool ProcessRead();
 
-  /** Called when the socket is ready to be written to
-   * @return true on success, false to drop this socket
-   */
-  bool ProcessWrite();
+	/** Called when the socket is ready to be written to
+	* @return true on success, false to drop this socket
+	*/
+	bool ProcessWrite();
 
-  /** Called with a line received from the socket
-   * @param buf The line
-   * @return true to continue reading, false to drop the socket
-   */
-  virtual bool Read(const Flux::string &buf);
+	/** Called with a line received from the socket
+	* @param buf The line
+	* @return true to continue reading, false to drop the socket
+	*/
+	virtual bool Read(const Flux::string &buf);
 
-  /** Write to the socket
-   * @param message The message
-   */
-  void Write(const char *message, ...);
-  void Write(const Flux::string &message);
+	/** Write to the socket
+	* @param message The message
+	*/
+	template<typename... Args>
+	void Write(const Flux::string &fmt, const Args&... args)
+	{
+		if (fmt.empty())
+			return;
 
-  /** Get the length of the read buffer
-   * @return The length of the read buffer
-   */
-  int ReadBufferLen() const;
+		this->WriteBuffer += tfm::format(fmt, args...) + "\n";
+		SocketEngine::MarkWritable(this);
+	}
 
-  /** Get the length of the write buffer
-   * @return The length of the write buffer
-   */
-  int WriteBufferLen() const;
+	/** Get the length of the read buffer
+	* @return The length of the read buffer
+	*/
+	int ReadBufferLen() const;
+
+	/** Get the length of the write buffer
+	* @return The length of the write buffer
+	*/
+	int WriteBufferLen() const;
 };
 
 class BinarySocket : public virtual Socket
 {
-  struct DataBlock
-  {
-    char *buf;
-    size_t len;
+	struct DataBlock
+	{
+		char *buf;
+		size_t len;
 
-    DataBlock(const char *b, size_t l);
-    ~DataBlock();
-  };
+		DataBlock(const char *b, size_t l);
+		~DataBlock();
+	};
 
   std::deque<DataBlock *> WriteBuffer;
 
 public:
-  /** Constructor
-   */
-  BinarySocket();
+	/** Constructor
+	*/
+	BinarySocket();
 
-  /** Default destructor
-   */
-  virtual ~BinarySocket();
+	/** Default destructor
+	*/
+	virtual ~BinarySocket();
 
-  /** Called when there is something to be received for this socket
-   * @return true on success, false to drop this socket
-   */
-  bool ProcessRead();
+	/** Called when there is something to be received for this socket
+	* @return true on success, false to drop this socket
+	*/
+	bool ProcessRead();
 
-  /** Called when the socket is ready to be written to
-   * @return true on success, false to drop this socket
-   */
-  bool ProcessWrite();
+	/** Called when the socket is ready to be written to
+	* @return true on success, false to drop this socket
+	*/
+	bool ProcessWrite();
 
-  /** Write data to the socket
-   * @param buffer The data to write
-   * @param l The length of the data
-   */
-  void Write(const char *buffer, size_t l);
+	/** Write data to the socket
+	* @param buffer The data to write
+	* @param l The length of the data
+	*/
+	void Write(const char *buffer, size_t l);
 
-  /** Called with data from the socket
-   * @param buffer The data
-   * @param l The length of buffer
-   * @return true to continue reading, false to drop the socket
-   */
-  virtual bool Read(const char *buffer, size_t l);
+	/** Called with data from the socket
+	* @param buffer The data
+	* @param l The length of buffer
+	* @return true to continue reading, false to drop the socket
+	*/
+	virtual bool Read(const char *buffer, size_t l);
 };
 
 class ListenSocket : public Socket
@@ -447,108 +482,66 @@ public:
 class ClientSocket : public virtual Socket
 {
 public:
-  /* Listen socket this connection came from */
-  ListenSocket *LS;
-  /* Clients address */
-  sockaddrs clientaddr;
+	/* Listen socket this connection came from */
+	ListenSocket *LS;
+	/* Clients address */
+	sockaddrs clientaddr;
 
-  /** Constructor
-   * @param ls Listen socket this connection is from
-   * @param addr Address the connection came from
-   */
-  ClientSocket(ListenSocket *ls, const sockaddrs &addr);
+	/** Constructor
+	* @param ls Listen socket this connection is from
+	* @param addr Address the connection came from
+	*/
+	ClientSocket(ListenSocket *ls, const sockaddrs &addr);
 
-  /** Called when there either is a read or write event.
-   * Used to determine whether or not this socket is connected yet.
-   * @return true to continue to call ProcessRead/ProcessWrite, false to not continue
-   */
-  bool Process();
+	/** Called when there either is a read or write event.
+	* Used to determine whether or not this socket is connected yet.
+	* @return true to continue to call ProcessRead/ProcessWrite, false to not continue
+	*/
+	bool Process();
 
-  /** Called when there is an error for this socket
-   * @return true on success, false to drop this socket
-   */
-  void ProcessError();
+	/** Called when there is an error for this socket
+	* @return true on success, false to drop this socket
+	*/
+	void ProcessError();
 
-  /** Called when a client has been accepted() successfully.
-   */
-  virtual void OnAccept();
+	/** Called when a client has been accepted() successfully.
+	*/
+	virtual void OnAccept();
 
-  /** Called when there was an error accepting the client
-   */
-  virtual void OnError(const Flux::string &error);
+	/** Called when there was an error accepting the client
+	*/
+	virtual void OnError(const Flux::string &error);
 };
 
 class Pipe : public Socket
 {
 public:
-  /** The FD of the write pipe (if this isn't evenfd)
-   * this->Sock is the readfd
-   */
-  int WritePipe;
+	/** The FD of the write pipe (if this isn't evenfd)
+	* this->Sock is the readfd
+	*/
+	int WritePipe;
 
-  /** Constructor
-   */
-  Pipe();
+	/** Constructor
+	*/
+	Pipe();
 
-  /** Destructor
-   */
-  ~Pipe();
+	/** Destructor
+	*/
+	~Pipe();
 
-  /** Called when data is to be read
-   */
-  bool ProcessRead();
+	/** Called when data is to be read
+	*/
+	bool ProcessRead();
 
-  /** Called when this pipe needs to be woken up
-   */
-  void Notify();
+	/** Called when this pipe needs to be woken up
+	*/
+	void Notify();
 
-  /** Should be overloaded to do something useful
-   */
-  virtual void OnNotify();
+	/** Should be overloaded to do something useful
+	*/
+	virtual void OnNotify();
 };
 
-/**********************************************************************/
-
-class SocketEngine
-{
-public:
-  /* Map of sockets */
-  static std::map<int, Socket *> Sockets;
-
-  /** Called to initialize the socket engine
-   */
-  static void Init();
-
-  /** Called to shutdown the socket engine
-   */
-  static void Shutdown();
-
-  /** Add a socket to the internal list
-   * @param s The socket
-   */
-  static void AddSocket(Socket *s);
-
-  /** Delete a socket from the internal list
-   * @param s The socket
-   */
-  static void DelSocket(Socket *s);
-
-  /** Mark a socket as writeable
-   * @param s The socket
-   */
-  static void MarkWritable(Socket *s);
-
-  /** Unmark a socket as writeable
-   * @param s The socket
-   */
-  static void ClearWritable(Socket *s);
-
-  /** Read from sockets and do things
-   * @param fast Process the sockets without the normal iteration blocking
-   */
-  static void Process(bool fast = false);
-};
-
-#include "dns.h"
+// #include "dns.h"
 
 #endif

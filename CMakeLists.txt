@@ -136,6 +136,7 @@ check_include_file(setjmp.h HAVE_SETJMP_H)
 check_include_file(sys/types.h HAVE_SYS_TYPES_H)
 check_include_file(stdint.h HAVE_STDINT_H)
 check_include_file(stddef.h HAVE_STDDEF_H)
+check_include_file(fcntl.h HAVE_FCNTL_H)
 
 # Because strndupa is apparnetly not a function or some shit, we must
 # make sure this program compiles.

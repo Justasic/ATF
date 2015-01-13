@@ -63,9 +63,9 @@ public:
 
 	// String-style write functions
 	template<typename... Args>
-	int printf(const std::string &str, const Args&... args)
+	int printf(const Flux::string &str, const Args&... args)
 	{
-		std::string tmp = tfm::format(str.c_str(), args...);
+		Flux::string tmp = tfm::format(str.c_str(), args...);
 		this->Write(tmp.c_str(), tmp.length());
 	}
 
@@ -105,15 +105,15 @@ class FileSystem
 {
 public:
 
-	virtual File *OpenFile(const std::string &path, fsMode_t mode);
+	virtual File *OpenFile(const Flux::string &path, fsMode_t mode);
 	virtual void CloseFile(File *f);
 
 
 	// Static functions used for simple reasons
-	static bool IsDirectory(const std::string &str);
-	static bool IsFile(const std::string &str);
-	static bool FileExists(const std::string &str);
-	static void MakeDirectory(const std::string &str);
-	static std::string GetCurrentDirectory();
-	static std::vector<std::string> DirectoryList(const std::string &dir);
+	static bool IsDirectory(const Flux::string &str);
+	static bool IsFile(const Flux::string &str);
+	static bool FileExists(const Flux::string &str);
+	static void MakeDirectory(const Flux::string &str);
+	static Flux::string GetCurrentDirectory();
+	static Flux::vector DirectoryList(const Flux::string &dir);
 };

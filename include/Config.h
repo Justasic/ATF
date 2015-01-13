@@ -46,6 +46,12 @@ public:
 	std::string bind;
 	short int port;
 
+	//////////////////////////////////////////////////////////
+	// IRC-socket related variables
+	int SockWait;
+
 	// Call an event.
-	EventDispatcher ConfigEvents;
+	Event<Config*> OnRehash;
 };
+
+extern Config *config;

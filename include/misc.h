@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdlib>
 #include <cstdarg>
+#include <cstring>
 
 #ifndef NDEBUG
 # define dprintf(...) printf(__VA_ARGS__)

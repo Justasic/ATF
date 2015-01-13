@@ -1,83 +1,98 @@
 #pragma once
+
 #include <functional>
-#include <utility>
-#include <map>
-#include <string>
+#include <vector>
 
-// Every event has a callable and arguments.
-// There's an EventDispatcher which handles all events and calls them.
-
-
-// There's two types of events, one which returns EventReturn and one which is a void function.
-enum EventReturn
+template<class... arguments__>
+class Event
 {
-	EVENT_STOP = 1,
-	EVENT_CONTINUE
-};
-
-typedef std::function<void()> voidfunc_t;
-typedef std::function<EventReturn()> eventfunc_t;
-
-class EventDispatcher
-{
-	std::map<std::string, std::vector<eventfunc_t>> retevents;
-	std::map<std::string, std::vector<voidfunc_t>> voidevents;
+protected:
+	std::vector<std::function<bool(arguments__...)>> callables;
 public:
-	EventDispatcher() {}
-	~EventDispatcher() {}
-
-	// Handle adding events to functions
-	template<class _Function>
-	void AddReturnEvent(const std::string &name, _Function&& __f)
+	template<class callable>
+	void add(const callable c)
 	{
-		eventfunc_t func = std::function<EventReturn()>(__f);
-		//std::bind(std::forward<_Function>(__f), std::forward<_Args>(__args)...);
-		retevents[name].push_back(func);
+		std::function<bool(arguments__...)> func = c;
+		callables.push_back(func);
 	}
 
-	template<class _Function>
-	void AddVoidEvent(const std::string &name, _Function&& __f)
+	bool call(arguments__&&... args)
 	{
-		voidfunc_t func = std::function<void()>(__f);
-		//std::bind(std::forward<_Function>(__f), std::forward<_Args>(__args)...);
-		voidevents[name].push_back(func);
-	}
-
-	template<class... _Args>
-	void CallVoidEvent(const std::string &name, _Args&&... __args)
-	{
-		for (std::map<std::string, std::vector<voidfunc_t>>::const_iterator it = voidevents.begin(), it_end = voidevents.end(); it != it_end; ++it)
+		for (auto it : callables)
 		{
-			if (it->first == name)
-			{
-				for (auto it : it->second)
-				{
-					voidfunc_t func = std::bind(it, std::forward<_Args>(__args)...);
-					func();
-				}
-			}
+			if (!it) // Not callable.
+				continue;
+
+			// Call the event, if it returns false then stop the loop and
+			// return false (event stop)
+			// otherwise continue until everything has been called.
+			if (it(std::forward<arguments__>(args)...) == false)
+				return false;
 		}
+		return true;
 	}
 
-
-	template<class... _Args>
-	EventReturn CallReturnEvent(const std::string &name, _Args&&... __args)
+	// I would have done a templated call and compare std::function to std::function
+	// but std::function::operator == was deleted so I can't make that compare.
+	// lil shits.
+	bool remove(const size_t pos)
 	{
-		for (std::map<std::string, std::vector<eventfunc_t>>::const_iterator it = retevents.begin(), it_end = retevents.end(); it != it_end; ++it)
+		if (pos < this->callables.size())
 		{
-			if (it->first == name)
-			{
-				for (auto it : it->second)
-				{
-					eventfunc_t func = std::bind(it, std::forward<_Args>(__args)...);
-					EventReturn ret = func();
-					if (ret != EVENT_CONTINUE)
-						return ret;
-				}
-			}
+			this->callables.erase(this->callables.begin()+pos);
+			return true;
 		}
+		else
+			return false;
+	}
 
-		return EVENT_CONTINUE;
+	void reset()
+	{
+		this->callables.clear();
+		this->callables.shrink_to_fit();
+	}
+
+	size_t eventcount() const
+	{
+		return this->callables.size();
+	}
+
+	bool hasevents() const
+	{
+		return !this->callables.empty();
+	}
+
+	std::function<bool(arguments__...)> geteventcallable(const size_t pos)
+	{
+		if (pos < this->callables.size())
+			return this->callables[pos];
+		else
+			return std::function<bool(arguments__...)>();
+	}
+
+	// Same as geteventcallable
+	std::function<bool(arguments__...)> operator [] (const size_t pos)
+	{
+		return this->geteventcallable(pos);
+	}
+
+	// Same as hasevents
+	bool operator ! () const
+	{
+		return this->hasevents();
+	}
+
+	// Same as call
+	bool operator () (arguments__&&... args)
+	{
+		return this->call(std::forward<arguments__>(args)...);
+	}
+
+	// Same as add
+	template<class callable>
+	void operator += (const callable c)
+	{
+		std::function<bool(arguments__...)> func = c;
+		callables.push_back(func);
 	}
 };
-

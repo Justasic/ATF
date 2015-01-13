@@ -3,7 +3,7 @@
 #include "misc.h"
 
 
-MySQL::MySQL(const std::string &host, const std::string &user, const std::string &pass, const std::string &db, short p = 0) :
+MySQL::MySQL(const Flux::string &host, const Flux::string &user, const Flux::string &pass, const Flux::string &db, short p = 0) :
 	user(user), pass(pass), host(host), db(db), port(p)
 {
 	printf("MySQL client version: %s\n", mysql_get_client_info());
@@ -26,7 +26,7 @@ MySQL::~MySQL()
 	mysql_close(con);
 }
 
-MySQL_Result MySQL::Query(const std::string &query)
+MySQL_Result MySQL::Query(const Flux::string &query)
 {
 	// Form our object
 	MySQL_Result res;
@@ -87,11 +87,11 @@ tryconnect:
 	return true;
 }
 
-std::string MySQL::Escape(const std::string &str)
+Flux::string MySQL::Escape(const Flux::string &str)
 {
 	char *tmp = new char[str.length() * 2 + 1];
 	mysql_real_escape_string(this->con, tmp, str.c_str(), str.length());
-	std::string retStr(tmp);
+	Flux::string retStr(tmp);
 	delete [] tmp;
 	return retStr;
 }

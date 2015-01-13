@@ -10,10 +10,10 @@
 #pragma once
 #ifndef TIMERS_H
 #define TIMERS_H
+#include "flux.h"
+#include <ctime>
 
-#include "includes.h"
-
-class Timer : public Base
+class Timer
 {
  private:
 	/** The time this was created
@@ -96,7 +96,7 @@ class Timer : public Base
  * This will ensure timers are not missed, as well as removing timers that have
  * expired and allowing the addition of new ones.
  */
-class TimerManager : public Base
+class TimerManager
 {
 	/** A list of timers
 	 */

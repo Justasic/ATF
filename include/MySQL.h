@@ -8,12 +8,23 @@
 #include <string>
 #include <cstring>
 
+// Prevents mysql from typedefing something not used and will throw errros
+// this is stupid but it works
+#define HAVE_INT32
 
 // Mysql
 #include <mysql/my_global.h>
 #include <mysql/mysql.h>
 
-typedef struct MySQL_Result_s {
+// Fixes for mysql-specific defines which we don't use
+#undef VERSION
+#undef int32
+
+#include "flux.h"
+#include "EventDispatcher.h"
+
+typedef struct MySQL_Result_s
+{
 	int fields;
 	std::map<int, MYSQL_ROW> rows;
 } MySQL_Result;
@@ -22,7 +33,7 @@ class MySQLException : public std::exception
 {
 	const char *str;
 public:
-	MySQLException(const std::string &mstr)
+	MySQLException(const Flux::string &mstr)
 	{
 		// we're crashing, I honestly have bigger issues than memleaks right now.
 		this->str = strdup(mstr.c_str());
@@ -46,7 +57,7 @@ class MySQL
 	MYSQL *con;
 
 	// As much as I hate storing these, we must to reconnect on timeouts.
-	std::string user, pass, host, db;
+	Flux::string user, pass, host, db;
 
 	// MySQL server's port.
 	short int port;
@@ -55,15 +66,17 @@ class MySQL
 	bool DoConnection();
 public:
 
-	MySQL(const std::string &host, const std::string &user, const std::string &pass, const std::string &db, short);
+	MySQL(const Flux::string &host, const Flux::string &user, const Flux::string &pass, const Flux::string &db, short);
 	~MySQL();
 
 	// Run a query
-	MySQL_Result Query(const std::string &query);
+	MySQL_Result Query(const Flux::string &query);
 
 	// Check the connection to the database.
 	bool CheckConnection();
 
 	// Escape a string
-	std::string Escape(const std::string &str);
+	Flux::string Escape(const Flux::string &str);
+
+	Event<Flux::string, MySQL_Result> OnQuery;
 };

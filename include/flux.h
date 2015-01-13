@@ -24,7 +24,7 @@
 #include <bitset>
 #include <ios>
 #include <typeinfo>
-#include "config.h" /* we include the config header from ./configure */
+#include "sysconf.h" /* we include the config header from ./configure */
 
 #ifdef __GNUC__
 # define DEPRECATED(func) func __attribute__ ((deprecated))
@@ -43,18 +43,18 @@ namespace Flux
 extern bool protocoldebug;
 template<typename type_name, typename value> inline type_name value_cast(const value &y)
 {
-    std::stringstream stream;
-    type_name nullpointer;
-    type_name x;
-    if(!(stream << std::setprecision(1000) << y)) // use setprecision so scientific notation does not get in the way.
-	throw;
-    if(!(stream >> x))
-    {
-	if(protocoldebug)
-	    printf("Failed to cast \"%s\" to \"%s\"\n", typeid(value).name(), typeid(type_name).name());
-	return nullpointer;
-    }
-    return x;
+	std::stringstream stream;
+	type_name nullpointer;
+	type_name x;
+	if(!(stream << std::setprecision(1000) << y)) // use setprecision so scientific notation does not get in the way.
+		throw;
+	if(!(stream >> x))
+	{
+		if(protocoldebug)
+			printf("Failed to cast \"%s\" to \"%s\"\n", typeid(value).name(), typeid(type_name).name());
+		return nullpointer;
+	}
+	return x;
 }
 /** Case insensitive map, ASCII rules.
  * That is;
@@ -245,465 +245,470 @@ namespace Flux {
    *
    * All casting functions are written by Justasic
    */
-  class string
-  {
-  private:
-    base_string _string;
-  public:
-    typedef base_string::iterator iterator;
-    typedef base_string::const_iterator const_iterator;
-    typedef base_string::reverse_iterator reverse_iterator;
-    typedef base_string::const_reverse_iterator const_reverse_iterator;
-    typedef base_string::size_type size_type;
-    static const size_type npos = static_cast<size_type>(-1);
-
-    string() : _string("") { }
-    explicit string(float f) : _string() { _string = value_cast<base_string>(f); }
-    explicit string(double d) : _string() { _string = value_cast<base_string>(d); }
-    explicit string(int i) : _string() { _string = value_cast<base_string>(i); }
-    string(char chr) : _string() { _string = chr; }
-    string(size_type n, char chr) : _string(n, chr) { }
-    string(const char *_str) : _string(_str) { }
-    string(wchar_t chr) : _string() { _string = chr; }
-    string(const wchar_t *_str) : _string() { _string = value_cast<std::string>(_str); }
-    string(const base_string &_str) : _string(_str) { }
-    string(const ci::string &_str) : _string(_str.c_str()) { }
-    string(const string &_str, size_type pos = 0, size_type n = npos) : _string(_str._string, pos, n) { }
-//     ~string() { printf("~: %s\n", this->c_str()); }
-    template <class InputIterator> string(InputIterator first, InputIterator last) : _string(first, last) { }
-
-    inline string &operator=(char chr) { this->_string = chr; return *this; }
-    inline string &operator=(const char *_str) { this->_string = _str; return *this; }
-    inline string &operator=(const base_string &_str) { this->_string = _str; return *this; }
-    inline string &operator=(const ci::string &_str) { this->_string = _str.c_str(); return *this; }
-    inline string &operator=(const string &_str) { if (this != &_str) this->_string = _str._string; return *this; }
-
-    inline bool operator==(const char *_str) const { return this->_string == _str; }
-    inline bool operator==(const base_string &_str) const { return this->_string == _str; }
-    inline bool operator==(const ci::string &_str) const { return ci::string(this->_string.c_str()) == _str; }
-    inline bool operator==(const string &_str) const { return this->_string == _str._string; }
-
-    inline bool equals_cs(const char *_str) const { return this->_string == _str; }
-    inline bool equals_cs(const base_string &_str) const { return this->_string == _str; }
-    inline bool equals_cs(const ci::string &_str) const { return this->_string == _str.c_str(); }
-    inline bool equals_cs(const string &_str) const { return this->_string == _str._string; }
-
-    inline bool equals_ci(const char *_str) const { return ci::string(this->_string.c_str()) == _str; }
-    inline bool equals_ci(const base_string &_str) const { return ci::string(this->_string.c_str()) == _str.c_str(); }
-    inline bool equals_ci(const ci::string &_str) const { return _str == this->_string.c_str(); }
-    inline bool equals_ci(const string &_str) const { return ci::string(this->_string.c_str()) == _str._string.c_str(); }
-
-    inline bool operator!=(const char *_str) const { return !operator==(_str); }
-    inline bool operator!=(const base_string &_str) const { return !operator==(_str); }
-    inline bool operator!=(const ci::string &_str) const { return !operator==(_str); }
-    inline bool operator!=(const string &_str) const { return !operator==(_str); }
-
-    inline string &operator+=(char chr) { this->_string += chr; return *this; }
-    inline string &operator+=(const char *_str) { this->_string += _str; return *this; }
-    inline string &operator+=(const base_string &_str) { this->_string += _str; return *this; }
-    inline string &operator+=(const ci::string &_str) { this->_string += _str.c_str(); return *this; }
-    inline string &operator+=(const string &_str) { if (this != &_str) this->_string += _str._string; return *this; }
-
-    inline const string operator+(char chr) const { return string(*this) += chr; }
-    inline const string operator+(const char *_str) const { return string(*this) += _str; }
-    inline const string operator+(const base_string &_str) const { return string(*this) += _str; }
-    inline const string operator+(const ci::string &_str) const { return string(*this) += _str; }
-    inline const string operator+(const string &_str) const { return string(*this) += _str; }
-
-    friend const string operator+(char chr, const string &str);
-    friend const string operator+(const char *_str, const string &str);
-    friend const string operator+(const base_string &_str, const string &str);
-    friend const string operator+(const ci::string &_str, const string &str);
-    friend const string operator+(const string &str, const base_string &_str);
-
-    inline bool operator<(const string &_str) const { return this->_string < _str._string; }
-
-    inline const char *c_str() const { return this->_string.c_str(); }
-    inline char *cc_str() const { return const_cast<char*>(this->_string.c_str()); }
-    inline const char *data() const { return this->_string.data(); }
-    inline ci::string ci_str() const { return ci::string(this->_string.c_str()); }
-    inline const base_string &std_str() const { return this->_string; }
-    inline base_string &std_str() { return this->_string; }
-    inline string url_str() const
-    {
-	string ret;
-	const char *t = this->_string.c_str();
-	while(t && *t)
+	class string
 	{
-	    int c = *t;
-	    const char *e = url_escape_table[c];
-	    if(e)
-		ret += e;
-	    else
-		ret += c;
-	    t++;
-	}
-	return ret;
-    }
+	private:
+		base_string _string;
+	public:
+		typedef base_string::iterator iterator;
+		typedef base_string::const_iterator const_iterator;
+		typedef base_string::reverse_iterator reverse_iterator;
+		typedef base_string::const_reverse_iterator const_reverse_iterator;
+		typedef base_string::size_type size_type;
+		static const size_type npos = static_cast<size_type>(-1);
 
-    inline bool empty() const { return this->_string.empty(); }
-    inline size_type length() const { return this->_string.length(); }
-    inline size_type size() const { return this->_string.size(); }
-    inline size_type capacity() const { return this->_string.capacity(); }
-    inline size_type max_size() const { return this->_string.max_size(); }
-    inline void swap(string &_str) { this->_string.swap(_str._string); }
-    inline void push_back(char c) { return this->_string.push_back(c); }
-    inline void push_back(const string &_str) { if (this != &_str) this->_string += _str._string; }
-    inline void resize(size_type n) { return this->_string.resize(n); }
+		string() : _string("") { }
+		explicit string(float f) : _string() { _string = value_cast<base_string>(f); }
+		explicit string(double d) : _string() { _string = value_cast<base_string>(d); }
+		explicit string(int i) : _string() { _string = value_cast<base_string>(i); }
+		string(char chr) : _string() { _string = chr; }
+		string(size_type n, char chr) : _string(n, chr) { }
+		string(const char *_str) : _string(_str) { }
+		string(wchar_t chr) : _string() { _string = chr; }
+		string(const wchar_t *_str) : _string() { _string = value_cast<std::string>(_str); }
+		string(const base_string &_str) : _string(_str) { }
+		string(const ci::string &_str) : _string(_str.c_str()) { }
+		string(const string &_str, size_type pos = 0, size_type n = npos) : _string(_str._string, pos, n) { }
+		string(const std::vector<string> &_vec, const std::string &delim) { this->implode(_vec, delim); }
+		string(const std::vector<string> &_vec) { this->implode(_vec, " "); }
+		template <class InputIterator> string(InputIterator first, InputIterator last) : _string(first, last) { }
 
-    inline string erase(size_t pos = 0, size_t n = base_string::npos) { return this->_string.erase(pos, n); }
-    inline iterator erase(const iterator &i) { return this->_string.erase(i); }
-    inline iterator erase(const iterator &first, const iterator &last) { return this->_string.erase(first, last); }
-    //inline void erase(size_type pos = 0, size_type n = base_string::npos) { this->_string.erase(pos, n); }
+		inline string &operator=(char chr) { this->_string = chr; return *this; }
+		inline string &operator=(const char *_str) { this->_string = _str; return *this; }
+		inline string &operator=(const base_string &_str) { this->_string = _str; return *this; }
+		inline string &operator=(const ci::string &_str) { this->_string = _str.c_str(); return *this; }
+		inline string &operator=(const string &_str) { if (this != &_str) this->_string = _str._string; return *this; }
 
-    inline void trim()
-    {
-	while(!this->_string.empty() && isspace(this->_string[0]))
-	    this->_string.erase(this->_string.begin());
-	while(!this->_string.empty() && isspace(this->_string[this->_string.length() - 1]))
-	    this->_string.erase(this->_string.length() - 1);
-    }
+		inline bool operator==(const char *_str) const { return this->_string == _str; }
+		inline bool operator==(const base_string &_str) const { return this->_string == _str; }
+		inline bool operator==(const ci::string &_str) const { return ci::string(this->_string.c_str()) == _str; }
+		inline bool operator==(const string &_str) const { return this->_string == _str._string; }
 
-    inline string tolower() { std::transform(_string.begin(), _string.end(), _string.begin(), ::tolower); return *this; }
-    inline string toupper() { std::transform(_string.begin(), _string.end(), _string.begin(), ::toupper); return *this; }
-    inline string tolower() const { base_string tmp = this->_string; std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower); return tmp; }
-    inline string toupper() const { base_string tmp = this->_string; std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::toupper); return tmp; }
-    inline void clear() { this->_string.clear(); }
-    inline bool search(const string &_str) { if(_string.find(_str._string) != base_string::npos) return true; return false; }
-    inline bool search(const string &_str) const { if(_string.find(_str._string) != base_string::npos) return true; return false; }
-    inline bool search_ci(const string &_str) { if(ci::string(this->_string.c_str()).find(ci::string(_str.c_str())) != ci::string::npos) return true; return false; }
-    inline bool search_ci(const string &_str) const { if(ci::string(this->_string.c_str()).find(ci::string(_str.c_str())) != ci::string::npos) return true; return false; }
+		inline bool equals_cs(const char *_str) const { return this->_string == _str; }
+		inline bool equals_cs(const base_string &_str) const { return this->_string == _str; }
+		inline bool equals_cs(const ci::string &_str) const { return this->_string == _str.c_str(); }
+		inline bool equals_cs(const string &_str) const { return this->_string == _str._string; }
 
-    inline size_type find(const string &_str, size_type pos = 0) const { return this->_string.find(_str._string, pos); }
-    inline size_type find(char chr, size_type pos = 0) const { return this->_string.find(chr, pos); }
-    inline size_type find_ci(const string &_str, size_type pos = 0) const { return ci::string(this->_string.c_str()).find(ci::string(_str._string.c_str()), pos); }
-    inline size_type find_ci(char chr, size_type pos = 0) const { return ci::string(this->_string.c_str()).find(chr, pos); }
+		inline bool equals_ci(const char *_str) const { return ci::string(this->_string.c_str()) == _str; }
+		inline bool equals_ci(const base_string &_str) const { return ci::string(this->_string.c_str()) == _str.c_str(); }
+		inline bool equals_ci(const ci::string &_str) const { return _str == this->_string.c_str(); }
+		inline bool equals_ci(const string &_str) const { return ci::string(this->_string.c_str()) == _str._string.c_str(); }
 
-    inline size_type rfind(const string &_str, size_type pos = npos) const { return this->_string.rfind(_str._string, pos); }
-    inline size_type rfind(char chr, size_type pos = npos) const { return this->_string.rfind(chr, pos); }
-    inline size_type rfind_ci(const string &_str, size_type pos = npos) const { return ci::string(this->_string.c_str()).rfind(ci::string(_str._string.c_str()), pos); }
-    inline size_type rfind_ci(char chr, size_type pos = npos) const { return ci::string(this->_string.c_str()).rfind(chr, pos); }
+		inline bool operator!=(const char *_str) const { return !operator==(_str); }
+		inline bool operator!=(const base_string &_str) const { return !operator==(_str); }
+		inline bool operator!=(const ci::string &_str) const { return !operator==(_str); }
+		inline bool operator!=(const string &_str) const { return !operator==(_str); }
 
-    inline size_type find_first_of(const string &_str, size_type pos = 0) const { return this->_string.find_first_of(_str._string, pos); }
-    inline size_type find_first_of_ci(const string &_str, size_type pos = 0) const { return ci::string(this->_string.c_str()).find_first_of(ci::string(_str._string.c_str()), pos); }
+		inline string &operator+=(char chr) { this->_string += chr; return *this; }
+		inline string &operator+=(const char *_str) { this->_string += _str; return *this; }
+		inline string &operator+=(const base_string &_str) { this->_string += _str; return *this; }
+		inline string &operator+=(const ci::string &_str) { this->_string += _str.c_str(); return *this; }
+		inline string &operator+=(const string &_str) { if (this != &_str) this->_string += _str._string; return *this; }
 
-    inline size_type find_first_not_of(const string &_str, size_type pos = 0) const { return this->_string.find_first_not_of(_str._string, pos); }
-    inline size_type find_first_not_of_ci(const string &_str, size_type pos = 0) const { return ci::string(this->_string.c_str()).find_first_not_of(ci::string(_str._string.c_str()), pos); }
+		inline const string operator+(char chr) const { return string(*this) += chr; }
+		inline const string operator+(const char *_str) const { return string(*this) += _str; }
+		inline const string operator+(const base_string &_str) const { return string(*this) += _str; }
+		inline const string operator+(const ci::string &_str) const { return string(*this) += _str; }
+		inline const string operator+(const string &_str) const { return string(*this) += _str; }
 
-    inline size_type find_last_of(const string &_str, size_type pos = npos) const { return this->_string.find_last_of(_str._string, pos); }
-    inline size_type find_last_of_ci(const string &_str, size_type pos = npos) const { return ci::string(this->_string.c_str()).find_last_of(ci::string(_str._string.c_str()), pos); }
+		friend const string operator+(char chr, const string &str);
+		friend const string operator+(const char *_str, const string &str);
+		friend const string operator+(const base_string &_str, const string &str);
+		friend const string operator+(const ci::string &_str, const string &str);
+		friend const string operator+(const string &str, const base_string &_str);
 
-    inline size_type find_last_not_of(const string &_str, size_type pos = npos) const { return this->_string.find_last_not_of(_str._string, pos); }
-    inline size_type find_last_not_of_ci(const string &_str, size_type pos = npos) const { return ci::string(this->_string.c_str()).find_last_not_of(ci::string(_str._string.c_str()), pos); }
+		inline bool operator<(const string &_str) const { return this->_string < _str._string; }
 
-    inline bool is_number_only() const { return this->find_first_not_of("0123456789.-") == npos; }
-    inline bool is_pos_number_only() const { return this->find_first_not_of("0123456789.") == npos; }
+		inline const char *c_str() const { return this->_string.c_str(); }
+		inline char *cc_str() const { return const_cast<char*>(this->_string.c_str()); }
+		inline const char *data() const { return this->_string.data(); }
+		inline ci::string ci_str() const { return ci::string(this->_string.c_str()); }
+		inline const base_string &std_str() const { return this->_string; }
+		inline base_string &std_str() { return this->_string; }
+		inline string url_str() const
+		{
+			string ret;
+			const char *t = this->_string.c_str();
+			while(t && *t)
+			{
+				int c = *t;
+				const char *e = url_escape_table[c];
+				if(e)
+					ret += e;
+				else
+					ret += c;
+				t++;
+			}
+			return ret;
+		}
 
-    inline string replace(size_type pos, size_type n, const string &_str) { return string(this->_string.replace(pos, n, _str._string)); }
-    inline string replace(size_type pos, size_type n, const string &_str, size_type pos1, size_type n1) { return string(this->_string.replace(pos, n, _str._string, pos1, n1)); }
-    inline string replace(size_type pos, size_type n, size_type n1, char chr) { return string(this->_string.replace(pos, n, n1, chr)); }
-    inline string replace(iterator first, iterator last, const string &_str) { return string(this->_string.replace(first, last, _str._string)); }
+		inline std::vector<string> explode(const string &delim)
+		{
+			size_t start = 0, end = 0;
+			std::vector<string> ret;
 
-    inline string append(const string &_str) { return this->_string.append(_str._string); }
-    inline string append(const string &_str, size_t pos, size_t n) { return this->_string.append(_str._string, pos, n); }
-    inline string append(const char* s, size_t n) { return this->_string.append(s, n); }
-    inline string append(const char* s) { return this->_string.append(s); }
-    inline string append(size_t n, char c) { return this->_string.append(n, c); }
+			while (end != string::npos)
+			{
+				end = this->_string.find(delim._string, start);
 
-    inline int compare(const string &_str) const { return this->_string.compare(_str._string); }
-    inline int compare(const char *s) const { return this->_string.compare(s); }
-    inline int compare(size_t pos1, size_t n1, const string &_str) const { return this->_string.compare(pos1, n1, _str._string); }
-    inline int compare(size_t pos1, size_t n1, const char *s) const { return this->_string.compare(pos1, n1, s); }
-    inline int compare(size_t pos1, size_t n1, const string &_str, size_t pos2, size_t n2) const { return this->_string.compare(pos1, n1, _str._string, pos2, n2); }
-    inline int compare(size_t pos1, size_t n1, const char *s, size_t n2) const { return this->_string.compare(pos1, n1, s, n2); }
+				// If at end, use length=maxLength.  Else use length=end-start.
+				ret.push_back(this->_string.substr(start, (end == string::npos) ? string::npos : end - start));
 
-    inline string insert(size_t pos1, const string &_str) { return this->_string.insert(pos1, _str._string); }
-    inline string insert(size_t pos1, const string &_str, size_t pos2, size_t n) { return this->_string.insert(pos1, _str._string, pos2, n); }
-    inline string insert(size_t pos1, const char* s, size_t n) { return this->_string.insert(pos1, s, n); }
-    inline string insert(size_t pos1, const char* s) { return this->_string.insert(pos1, s); }
-    inline string insert(size_t pos1, size_t n, char c) { return this->_string.insert(pos1, n, c); }
-    inline iterator insert(iterator p, char c) { return this->_string.insert(p, c); }
-    inline void insert(iterator p, size_t n, char c) { return this->_string.insert(p, n, c); }
-    template<class InputIterator> inline void insert(iterator p, InputIterator first, InputIterator last) { return this->_string.insert(p, first, last); }
+				// If at end, use start=maxSize.  Else use start=end+delimiter.
+				start = ((end > (string::npos - delim.size())) ? string::npos : end + delim.size());
+			}
 
-    inline string assign(const string &str) { return this->_string.assign(str._string); }
-    inline string assign(const string &str, size_t pos, size_t n) { return this->_string.assign(str._string, pos, n); }
-    inline string assign(const char* s, size_t n) { return this->_string.assign(s, n); }
-    inline string assign(const char* s) { return this->_string.assign(s); }
-    inline string assign(size_t n, char c) { return this->_string.assign(n, c); }
-    template <class InputIterator> inline string assign(InputIterator first, InputIterator last) { return this->_string.assign(first, last); }
+			return ret;
+		}
 
-    inline string replace(iterator first, iterator last, size_type n, char chr) { return string(this->_string.replace(first, last, n, chr)); }
-    template <class InputIterator> inline string replace(iterator first, iterator last, InputIterator f, InputIterator l) { return string(this->_string.replace(first, last, f, l)); }
-    inline string replace_all_cs(const string &_orig, const string &_repl) const
-    {
-	Flux::string new_string = *this;
-	size_type pos = new_string.find(_orig), orig_length = _orig.length(), repl_length = _repl.length();
-	while (pos != npos)
-	{
-	    new_string = new_string.substr(0, pos) + _repl + new_string.substr(pos + orig_length);
-	    pos = new_string.find(_orig, pos + repl_length);
-	}
-	return new_string;
-    }
-     inline string replace_all_ci(const string &_orig, const string &_repl) const
-    {
-	Flux::string new_string = *this;
-	size_type pos = new_string.find_ci(_orig), orig_length = _orig.length(), repl_length = _repl.length();
-	while (pos != npos)
-	{
-	    new_string = new_string.substr(0, pos) + _repl + new_string.substr(pos + orig_length);
-	    pos = new_string.find_ci(_orig, pos + repl_length);
-	}
-	return new_string;
-    }
-    inline string substr(size_type pos = 0, size_type n = npos) const { return this->_string.substr(pos, n).c_str(); }
+		inline string implode(const std::vector<string> &_vec, const string &delim)
+		{
+			for (auto it = _vec.begin(), it_end = _vec.end(); it != it_end; ++it)
+			{
+				if (it + 1 == it_end)
+					this->_string += (*it)._string;
+				else
+					this->_string += (*it)._string + delim._string;
+			}
 
-    inline iterator begin() { return this->_string.begin(); }
-    inline const_iterator begin() const { return this->_string.begin(); }
-    inline iterator end() { return this->_string.end(); }
-    inline const_iterator end() const { return this->_string.end(); }
-    inline reverse_iterator rbegin() { return this->_string.rbegin(); }
-    inline const_reverse_iterator rbegin() const { return this->_string.rbegin(); }
-    inline reverse_iterator rend() { return this->_string.rend(); }
-    inline const_reverse_iterator rend() const { return this->_string.rend(); }
+			return *this;
+		}
 
-    inline const char &at(size_t pos) const { return this->_string.at(pos); }
-    inline char &at(size_t pos) { return this->_string.at(pos); }
-    inline std::allocator<char> get_allocator() const { return this->_string.get_allocator(); }
-    inline char &operator[](size_type n) { return this->_string[n]; }
-    inline const char &operator[](size_type n) const { return this->_string[n]; }
+		inline bool empty() const { return this->_string.empty(); }
+		inline size_type length() const { return this->_string.length(); }
+		inline size_type size() const { return this->_string.size(); }
+		inline size_type capacity() const { return this->_string.capacity(); }
+		inline size_type max_size() const { return this->_string.max_size(); }
+		inline void swap(string &_str) { this->_string.swap(_str._string); }
+		inline void push_back(char c) { return this->_string.push_back(c); }
+		inline void push_back(const string &_str) { if (this != &_str) this->_string += _str._string; }
+		inline void resize(size_type n) { return this->_string.resize(n); }
 
-    inline string isolate(char b, char e) const
-    {
-	string to_find;
-	size_t pos = _string.find(b);
-	pos += 1;
-	for (unsigned i = pos; i < _string.length(); i++){
-	    if (_string[i] == e)
-		break;
-	    else
-		to_find = to_find+_string[i];
-	}
-	return to_find;
-    }
+		inline string erase(size_t pos = 0, size_t n = base_string::npos) { return this->_string.erase(pos, n); }
+		inline iterator erase(const iterator &i) { return this->_string.erase(i); }
+		inline iterator erase(const iterator &first, const iterator &last) { return this->_string.erase(first, last); }
+		//inline void erase(size_type pos = 0, size_type n = base_string::npos) { this->_string.erase(pos, n); }
+
+		inline string trim()
+		{
+			while(!this->_string.empty() && isspace(this->_string[0]))
+				this->_string.erase(this->_string.begin());
+			while(!this->_string.empty() && isspace(this->_string[this->_string.length() - 1]))
+				this->_string.erase(this->_string.length() - 1);
+
+			return *this;
+		}
+
+		inline string tolower() { std::transform(_string.begin(), _string.end(), _string.begin(), ::tolower); return *this; }
+		inline string toupper() { std::transform(_string.begin(), _string.end(), _string.begin(), ::toupper); return *this; }
+		inline string tolower() const { base_string tmp = this->_string; std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower); return tmp; }
+		inline string toupper() const { base_string tmp = this->_string; std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::toupper); return tmp; }
+		inline void clear() { this->_string.clear(); }
+		inline bool search(const string &_str) { if(_string.find(_str._string) != base_string::npos) return true; return false; }
+		inline bool search(const string &_str) const { if(_string.find(_str._string) != base_string::npos) return true; return false; }
+		inline bool search_ci(const string &_str) { if(ci::string(this->_string.c_str()).find(ci::string(_str.c_str())) != ci::string::npos) return true; return false; }
+		inline bool search_ci(const string &_str) const { if(ci::string(this->_string.c_str()).find(ci::string(_str.c_str())) != ci::string::npos) return true; return false; }
+
+		inline size_type find(const string &_str, size_type pos = 0) const { return this->_string.find(_str._string, pos); }
+		inline size_type find(char chr, size_type pos = 0) const { return this->_string.find(chr, pos); }
+		inline size_type find_ci(const string &_str, size_type pos = 0) const { return ci::string(this->_string.c_str()).find(ci::string(_str._string.c_str()), pos); }
+		inline size_type find_ci(char chr, size_type pos = 0) const { return ci::string(this->_string.c_str()).find(chr, pos); }
+
+		inline size_type rfind(const string &_str, size_type pos = npos) const { return this->_string.rfind(_str._string, pos); }
+		inline size_type rfind(char chr, size_type pos = npos) const { return this->_string.rfind(chr, pos); }
+		inline size_type rfind_ci(const string &_str, size_type pos = npos) const { return ci::string(this->_string.c_str()).rfind(ci::string(_str._string.c_str()), pos); }
+		inline size_type rfind_ci(char chr, size_type pos = npos) const { return ci::string(this->_string.c_str()).rfind(chr, pos); }
+
+		inline size_type find_first_of(const string &_str, size_type pos = 0) const { return this->_string.find_first_of(_str._string, pos); }
+		inline size_type find_first_of_ci(const string &_str, size_type pos = 0) const { return ci::string(this->_string.c_str()).find_first_of(ci::string(_str._string.c_str()), pos); }
+
+		inline size_type find_first_not_of(const string &_str, size_type pos = 0) const { return this->_string.find_first_not_of(_str._string, pos); }
+		inline size_type find_first_not_of_ci(const string &_str, size_type pos = 0) const { return ci::string(this->_string.c_str()).find_first_not_of(ci::string(_str._string.c_str()), pos); }
+
+		inline size_type find_last_of(const string &_str, size_type pos = npos) const { return this->_string.find_last_of(_str._string, pos); }
+		inline size_type find_last_of_ci(const string &_str, size_type pos = npos) const { return ci::string(this->_string.c_str()).find_last_of(ci::string(_str._string.c_str()), pos); }
+
+		inline size_type find_last_not_of(const string &_str, size_type pos = npos) const { return this->_string.find_last_not_of(_str._string, pos); }
+		inline size_type find_last_not_of_ci(const string &_str, size_type pos = npos) const { return ci::string(this->_string.c_str()).find_last_not_of(ci::string(_str._string.c_str()), pos); }
+
+		inline bool is_number_only() const { return this->find_first_not_of("0123456789.-") == npos; }
+		inline bool is_pos_number_only() const { return this->find_first_not_of("0123456789.") == npos; }
+
+		inline string replace(size_type pos, size_type n, const string &_str) { return string(this->_string.replace(pos, n, _str._string)); }
+		inline string replace(size_type pos, size_type n, const string &_str, size_type pos1, size_type n1) { return string(this->_string.replace(pos, n, _str._string, pos1, n1)); }
+		inline string replace(size_type pos, size_type n, size_type n1, char chr) { return string(this->_string.replace(pos, n, n1, chr)); }
+		inline string replace(iterator first, iterator last, const string &_str) { return string(this->_string.replace(first, last, _str._string)); }
+
+		inline string append(const string &_str) { return this->_string.append(_str._string); }
+		inline string append(const string &_str, size_t pos, size_t n) { return this->_string.append(_str._string, pos, n); }
+		inline string append(const char* s, size_t n) { return this->_string.append(s, n); }
+		inline string append(const char* s) { return this->_string.append(s); }
+		inline string append(size_t n, char c) { return this->_string.append(n, c); }
+
+		inline int compare(const string &_str) const { return this->_string.compare(_str._string); }
+		inline int compare(const char *s) const { return this->_string.compare(s); }
+		inline int compare(size_t pos1, size_t n1, const string &_str) const { return this->_string.compare(pos1, n1, _str._string); }
+		inline int compare(size_t pos1, size_t n1, const char *s) const { return this->_string.compare(pos1, n1, s); }
+		inline int compare(size_t pos1, size_t n1, const string &_str, size_t pos2, size_t n2) const { return this->_string.compare(pos1, n1, _str._string, pos2, n2); }
+		inline int compare(size_t pos1, size_t n1, const char *s, size_t n2) const { return this->_string.compare(pos1, n1, s, n2); }
+
+		inline string insert(size_t pos1, const string &_str) { return this->_string.insert(pos1, _str._string); }
+		inline string insert(size_t pos1, const string &_str, size_t pos2, size_t n) { return this->_string.insert(pos1, _str._string, pos2, n); }
+		inline string insert(size_t pos1, const char* s, size_t n) { return this->_string.insert(pos1, s, n); }
+		inline string insert(size_t pos1, const char* s) { return this->_string.insert(pos1, s); }
+		inline string insert(size_t pos1, size_t n, char c) { return this->_string.insert(pos1, n, c); }
+		inline iterator insert(iterator p, char c) { return this->_string.insert(p, c); }
+		inline void insert(iterator p, size_t n, char c) { return this->_string.insert(p, n, c); }
+		template<class InputIterator> inline void insert(iterator p, InputIterator first, InputIterator last) { return this->_string.insert(p, first, last); }
+
+		inline string assign(const string &str) { return this->_string.assign(str._string); }
+		inline string assign(const string &str, size_t pos, size_t n) { return this->_string.assign(str._string, pos, n); }
+		inline string assign(const char* s, size_t n) { return this->_string.assign(s, n); }
+		inline string assign(const char* s) { return this->_string.assign(s); }
+		inline string assign(size_t n, char c) { return this->_string.assign(n, c); }
+		template <class InputIterator> inline string assign(InputIterator first, InputIterator last) { return this->_string.assign(first, last); }
+
+		inline string replace(iterator first, iterator last, size_type n, char chr) { return string(this->_string.replace(first, last, n, chr)); }
+		template <class InputIterator> inline string replace(iterator first, iterator last, InputIterator f, InputIterator l) { return string(this->_string.replace(first, last, f, l)); }
+		inline string replace_all_cs(const string &_orig, const string &_repl) const
+		{
+			Flux::string new_string = *this;
+			size_type pos = new_string.find(_orig), orig_length = _orig.length(), repl_length = _repl.length();
+			while (pos != npos)
+			{
+				new_string = new_string.substr(0, pos) + _repl + new_string.substr(pos + orig_length);
+				pos = new_string.find(_orig, pos + repl_length);
+			}
+			return new_string;
+		}
+		inline string replace_all_ci(const string &_orig, const string &_repl) const
+		{
+			Flux::string new_string = *this;
+			size_type pos = new_string.find_ci(_orig), orig_length = _orig.length(), repl_length = _repl.length();
+			while (pos != npos)
+			{
+				new_string = new_string.substr(0, pos) + _repl + new_string.substr(pos + orig_length);
+				pos = new_string.find_ci(_orig, pos + repl_length);
+			}
+			return new_string;
+		}
+		inline string substr(size_type pos = 0, size_type n = npos) const { return this->_string.substr(pos, n).c_str(); }
+
+		inline iterator begin() { return this->_string.begin(); }
+		inline const_iterator begin() const { return this->_string.begin(); }
+		inline iterator end() { return this->_string.end(); }
+		inline const_iterator end() const { return this->_string.end(); }
+		inline reverse_iterator rbegin() { return this->_string.rbegin(); }
+		inline const_reverse_iterator rbegin() const { return this->_string.rbegin(); }
+		inline reverse_iterator rend() { return this->_string.rend(); }
+		inline const_reverse_iterator rend() const { return this->_string.rend(); }
+
+		inline const char &at(size_t pos) const { return this->_string.at(pos); }
+		inline char &at(size_t pos) { return this->_string.at(pos); }
+		inline std::allocator<char> get_allocator() const { return this->_string.get_allocator(); }
+		inline char &operator[](size_type n) { return this->_string[n]; }
+		inline const char &operator[](size_type n) const { return this->_string[n]; }
+
+		inline string isolate(char b, char e) const
+		{
+			string to_find;
+			size_t pos = _string.find(b);
+			pos += 1;
+
+			for (unsigned i = pos; i < _string.length(); i++)
+			{
+				if (_string[i] == e)
+					break;
+				else
+					to_find = to_find+_string[i];
+			}
+			return to_find;
+		}
 
 
-    /* Strip Return chars */
-    inline string strip()
-    {
-	string new_buf = *this;
-	new_buf = new_buf.replace_all_cs("\n", "");
-	new_buf = new_buf.replace_all_cs("\r", "");
-	return new_buf;
-    }
+		/* Strip Return chars */
+		inline string strip()
+		{
+			string new_buf = *this;
+			new_buf = new_buf.replace_all_cs("\n", "");
+			new_buf = new_buf.replace_all_cs("\r", "");
+			return new_buf;
+		}
 
-    inline string strip() const
-    {
-	string new_buf = *this;
-	new_buf = new_buf.replace_all_cs("\n", "");
-	new_buf = new_buf.replace_all_cs("\r", "");
-	return new_buf;
-    }
-    /* Strip specific chars */
-    inline string strip(const char &_delim)
-    {
-	string new_buf = *this;
-	new_buf = new_buf.replace_all_cs(_delim, "");
-	return new_buf;
-    }
+		inline string strip() const
+		{
+			string new_buf = *this;
+			new_buf = new_buf.replace_all_cs("\n", "");
+			new_buf = new_buf.replace_all_cs("\r", "");
+			return new_buf;
+		}
+		/* Strip specific chars */
+		inline string strip(const char &_delim)
+		{
+			string new_buf = *this;
+			new_buf = new_buf.replace_all_cs(_delim, "");
+			return new_buf;
+		}
 
-    inline string strip(const char &_delim) const
-    {
-	string new_buf = *this;
-	new_buf = new_buf.replace_all_cs(_delim, "");
-	return new_buf;
-    }
-    //Transform from Text to Base64
-    inline string b64encode()
-    {
-      static const string Base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-      static const char Pad64 = '=';
-      string output, src = _string;
-      size_t src_pos = 0, src_len = src.length();
-      unsigned char input[3];
+		inline string strip(const char &_delim) const
+		{
+			string new_buf = *this;
+			new_buf = new_buf.replace_all_cs(_delim, "");
+			return new_buf;
+		}
+		//Transform from Text to Base64
+		inline string b64encode()
+		{
+			static const string Base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+			static const char Pad64 = '=';
+			string output, src = _string;
+			size_t src_pos = 0, src_len = src.length();
+			unsigned char input[3];
 
-      while (src_len - src_pos > 2)
-      {
-	input[0] = src[src_pos++];
-	input[1] = src[src_pos++];
-	input[2] = src[src_pos++];
+			while (src_len - src_pos > 2)
+			{
+				input[0] = src[src_pos++];
+				input[1] = src[src_pos++];
+				input[2] = src[src_pos++];
 
-	output += Base64[input[0] >> 2];
-	output += Base64[((input[0] & 0x03) << 4) + (input[1] >> 4)];
-	output += Base64[((input[1] & 0x0f) << 2) + (input[2] >> 6)];
-	output += Base64[input[2] & 0x3f];
-      }
-      /* Now we worry about padding */
-      if (src_pos != src_len)
-      {
-	input[0] = input[1] = input[2] = 0;
-	for (size_t i = 0; i < src_len - src_pos; ++i)
-		input[i] = src[src_pos + i];
+				output += Base64[input[0] >> 2];
+				output += Base64[((input[0] & 0x03) << 4) + (input[1] >> 4)];
+				output += Base64[((input[1] & 0x0f) << 2) + (input[2] >> 6)];
+				output += Base64[input[2] & 0x3f];
+			}
+			/* Now we worry about padding */
+			if (src_pos != src_len)
+			{
+				input[0] = input[1] = input[2] = 0;
+				for (size_t i = 0; i < src_len - src_pos; ++i)
+					input[i] = src[src_pos + i];
 
-	output += Base64[input[0] >> 2];
-	output += Base64[((input[0] & 0x03) << 4) + (input[1] >> 4)];
-	if (src_pos == src_len - 1)
-		output += Pad64;
-	else
-		output += Base64[((input[1] & 0x0f) << 2) + (input[2] >> 6)];
-	output += Pad64;
-      }
-      return output;
-    }
-    //Transform from Base64 to Human readable text
-    inline string b64decode()
-    {
-      static const string Base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-      static const char Pad64 = '=';
-      string output, src = _string;
-      unsigned state = 0;
-      string::const_iterator ch = src.begin(), send = src.end();
-      for (; ch != send; ++ch)
-      {
-	if (isspace(*ch)) /* Skip whitespace anywhere */
-	  continue;
+				output += Base64[input[0] >> 2];
+				output += Base64[((input[0] & 0x03) << 4) + (input[1] >> 4)];
 
-	if (*ch == Pad64)
-	  break;
+				if (src_pos == src_len - 1)
+					output += Pad64;
+				else
+					output += Base64[((input[1] & 0x0f) << 2) + (input[2] >> 6)];
+				output += Pad64;
+			}
+			return output;
+		}
+		//Transform from Base64 to Human readable text
+		inline string b64decode()
+		{
+			static const string Base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+			static const char Pad64 = '=';
+			string output, src = _string;
+			unsigned state = 0;
 
-	size_t pos = Base64.find(*ch);
-	if (pos == string::npos) /* A non-base64 character */
-	  return "";
-	switch (state)
-	{
-	  case 0:
-	    output += static_cast<char>(pos) << 2;
-	    state = 1;
-	    break;
-	  case 1:
-	    output[output.length() - 1] |= static_cast<char>(pos) >> 4;
-	    output += (pos & 0x0f) << 4;
-	    state = 2;
-	    break;
-	  case 2:
-	    output[output.length() - 1] |= static_cast<char>(pos) >> 2;
-	    output += (pos & 0x03) << 6;
-	    state = 3;
-	    break;
-	  case 3:
-	    output[output.length() - 1] |= static_cast<char>(pos);
-	    state = 0;
-	}
-      }
-      if (!output[output.length() - 1])
-	output.erase(output.length() - 1);
-      return output;
-    }
-    //Transform into Hexidecimal text string
-    inline string hex_str()
-    {
-      const char hextable[] = "0123456789ABCDEF";
+			string::const_iterator ch = src.begin(), send = src.end();
+			for (; ch != send; ++ch)
+			{
+				if (isspace(*ch)) /* Skip whitespace anywhere */
+					continue;
 
-      size_t l = _string.length();
-      string rv;
-      for (size_t i = 0; i < l; ++i)
-      {
-	unsigned char c = _string[i];
-	rv += hextable[c >> 4];
-	rv += hextable[c & 0xF];
-      }
-      return rv;
-    }
-    //Transform into human readable text from hexidecimal
-    inline string unhex()
-    {
-      size_t len = _string.length();
-	string rv;
-	for (size_t i = 0; i < len; i += 2)
-	{
-	  char h = _string[i], l = _string[i + 1];
-	  unsigned char byte = (h >= 'a' ? h - 'a' + 10 : h - '0') << 4;
-	  byte += (l >= 'a' ? l - 'a' + 10 : l - '0');
-	  rv += byte;
-	}
-	return rv;
-    }
-    //Transform into binary equivalent of the string
-    inline string bin_str()
-    {
-      string bin;
-      for(unsigned j = 0; j < _string.size(); ++j){
-	bin += std::bitset<10>(_string[j]).to_string();
-	bin += ' ';
-      }
-      bin.trim();
-      return bin;
-    }
-    /* Cast into an integer */
-    inline operator int() { return value_cast<int>(this->_string); }
-    /* Cast into a float */
-    inline operator float() { return value_cast<float>(this->_string); }
-    /* Cast into a double */
-    inline operator double() { return value_cast<double>(this->_string); }
-    /* Cast into a unsigned long */
-    inline operator unsigned long int() { return value_cast<size_t>(this->_string); }
-    /* Cast into a long integer */
-    inline operator long() { return value_cast<long>(this->_string); }
-    /* Cast into a unsigned integer */
-    inline operator unsigned() { return value_cast<unsigned>(this->_string); }
+				if (*ch == Pad64)
+					break;
 
-    friend std::ostream &operator<<(std::ostream &os, const string &_str);
-    friend std::istream &operator>>(std::istream &os, string &_str);
-  }; //end of string class
-  template<typename T> class map : public std::map<string, T> { };
-  template<typename T> class insensitive_map : public std::map<string, T, ci::less> { };
-  typedef std::map<string, std::shared_ptr<std::stringstream>> SerializeMap;
-  typedef std::vector<string> vector;
-  extern Flux::string Sanitize(const Flux::string&);
-  extern Flux::string RandomString(size_t);
-  extern Flux::string RandomNickString(size_t);
-  inline std::ostream &operator<<(std::ostream &os, const string &_str) { return os << _str._string; }
-  inline std::istream &operator>>(std::istream &os, string &_str) { return os >> _str._string; }
-  inline const string operator+(char chr, const string &str) { string tmp(chr); tmp += str; return tmp; }
-  inline const string operator+(const char *_str, const string &str) { string tmp(_str); tmp += str; return tmp; }
-  inline const string operator+(const base_string &_str, const string &str) { string tmp(_str); tmp += str; return tmp; }
-  inline const string operator+(const ci::string &_str, const string &str) { string tmp(_str); tmp += str; return tmp; }
+				size_t pos = Base64.find(*ch);
+				if (pos == string::npos) /* A non-base64 character */
+					return "";
+
+				switch (state)
+				{
+					case 0:
+					output += static_cast<char>(pos) << 2;
+					state = 1;
+					break;
+					case 1:
+					output[output.length() - 1] |= static_cast<char>(pos) >> 4;
+					output += (pos & 0x0f) << 4;
+					state = 2;
+					break;
+					case 2:
+					output[output.length() - 1] |= static_cast<char>(pos) >> 2;
+					output += (pos & 0x03) << 6;
+					state = 3;
+					break;
+					case 3:
+					output[output.length() - 1] |= static_cast<char>(pos);
+					state = 0;
+				}
+			}
+
+			if (!output[output.length() - 1])
+				output.erase(output.length() - 1);
+			return output;
+		}
+		//Transform into Hexidecimal text string
+		inline string hex_str()
+		{
+			const char hextable[] = "0123456789ABCDEF";
+
+			size_t l = _string.length();
+			string rv;
+			for (size_t i = 0; i < l; ++i)
+			{
+				unsigned char c = _string[i];
+				rv += hextable[c >> 4];
+				rv += hextable[c & 0xF];
+			}
+			return rv;
+		}
+		//Transform into human readable text from hexidecimal
+		inline string unhex()
+		{
+			size_t len = _string.length();
+			string rv;
+			for (size_t i = 0; i < len; i += 2)
+			{
+				char h = _string[i], l = _string[i + 1];
+				unsigned char byte = (h >= 'a' ? h - 'a' + 10 : h - '0') << 4;
+				byte += (l >= 'a' ? l - 'a' + 10 : l - '0');
+				rv += byte;
+			}
+			return rv;
+		}
+		//Transform into binary equivalent of the string
+		inline string bin_str()
+		{
+			string bin;
+			for(unsigned j = 0; j < _string.size(); ++j)
+			{
+				bin += std::bitset<10>(_string[j]).to_string();
+				bin += ' ';
+			}
+
+			bin.trim();
+			return bin;
+		}
+		/* Cast into an integer */
+		inline operator int() { return value_cast<int>(this->_string); }
+		/* Cast into a float */
+		inline operator float() { return value_cast<float>(this->_string); }
+		/* Cast into a double */
+		inline operator double() { return value_cast<double>(this->_string); }
+		/* Cast into a unsigned long */
+		inline operator unsigned long int() { return value_cast<size_t>(this->_string); }
+		/* Cast into a long integer */
+		inline operator long() { return value_cast<long>(this->_string); }
+		/* Cast into a unsigned integer */
+		inline operator unsigned() { return value_cast<unsigned>(this->_string); }
+
+		friend std::ostream &operator<<(std::ostream &os, const string &_str);
+		friend std::istream &operator>>(std::istream &os, string &_str);
+	}; //end of string class
+
+	template<typename T> class map : public std::map<string, T> { };
+	template<typename T> class insensitive_map : public std::map<string, T, ci::less> { };
+	typedef std::vector<string> vector;
+	inline std::ostream &operator<<(std::ostream &os, const string &_str) { return os << _str._string; }
+	inline std::istream &operator>>(std::istream &os, string &_str) { return os >> _str._string; }
+	inline const string operator+(char chr, const string &str) { string tmp(chr); tmp += str; return tmp; }
+	inline const string operator+(const char *_str, const string &str) { string tmp(_str); tmp += str; return tmp; }
+	inline const string operator+(const base_string &_str, const string &str) { string tmp(_str); tmp += str; return tmp; }
+	inline const string operator+(const ci::string &_str, const string &str) { string tmp(_str); tmp += str; return tmp; }
 
 }//end of namespace
-
-class sepstream
-{
- private:
-  Flux::string tokens;
-  Flux::string::iterator last_starting_position;
-  Flux::string::iterator n;
-  char sep;
- public:
-  sepstream(const Flux::string &source, char seperator);
-  virtual bool GetToken(Flux::string &token);
-  virtual const Flux::string GetRemaining();
-  virtual bool StreamEnd();
-};
-
-class dynamic_reference_base;
-class Base
-{
-  std::set<dynamic_reference_base*> References;
-public:
-  Base();
-  virtual ~Base();
-  void AddReference(dynamic_reference_base*);
-  void DelReference(dynamic_reference_base*);
-};
-
-class dynamic_reference_base : public Base
-{
-protected:
-  bool invalid;
-public:
-  dynamic_reference_base() : invalid(false) {}
-  virtual ~dynamic_reference_base() {}
-  inline void Invalidate() { this->invalid = true; }
-};
 #endif

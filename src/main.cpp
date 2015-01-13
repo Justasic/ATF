@@ -16,13 +16,14 @@
 #include "MySQL.h"
 #include "Config.h"
 #include "Request.h"
+#include "flux.h"
 
 std::atomic_bool quit;
 
 ThreadHandler *threads;
 MySQL *ms;
-Config *c;
-EventDispatcher OnRequest;
+Config *config;
+Event<Request, Flux::string> OnRequest;
 
 
 void OpenListener(int sock_fd)
@@ -100,11 +101,11 @@ int main(int argc, char **argv)
 	quit = false;
 
 	// Parse our config before anything
-	Config conf("adkit.conf");
-	c = &conf;
+	Config conf("atf.conf");
+	config = &conf;
 
 	printf("Config:\n");
-	c->Parse();
+	config->Parse();
 
 	ThreadHandler th;
 	th.Initialize();
@@ -113,14 +114,14 @@ int main(int argc, char **argv)
 	FCGX_Init();
 	// Formulate the string from the config.
 	std::stringstream val;
-	val << c->bind << ":" << c->port;
+	val << config->bind << ":" << config->port;
 	// Initialize a new FastCGI socket.
 	std::cout << "Opening FastCGI socket: " << val.str() << std::endl;
 	int sock_fd = FCGX_OpenSocket(val.str().c_str(), 1024);
 	printf("Opened socket fd: %d\n", sock_fd);
 
 	// Initialize MySQL
-	MySQL m(c->hostname, c->username, c->password, c->database, c->mysqlport);
+	MySQL m(config->hostname, config->username, config->password, config->database, config->mysqlport);
 	ms = &m;
 
 	for (unsigned int i = 0; i < (th.totalConcurrentThreads * 2) / 2; ++i)
@@ -133,8 +134,12 @@ int main(int argc, char **argv)
 	printf("Idling main thread.\n");
 	while(!quit)
 	{
-		sleep(5);
+		// Check database connection first
 		ms->CheckConnection();
+		// Process reads/writes/errors from the sockets
+		SocketEngine::Process();
+		// Tick all our timer events, call any which need calling.
+		TimerManager::TickTimers(time(NULL));
 	}
 
 	printf("Shutting down.\n");

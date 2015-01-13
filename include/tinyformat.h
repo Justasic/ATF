@@ -44,7 +44,7 @@
 //
 // To print a date to std::cout:
 //
-//   std::string weekday = "Wednesday";
+//   Flux::string weekday = "Wednesday";
 //   const char* month = "July";
 //   size_t day = 27;
 //   long hour = 14;
@@ -53,7 +53,7 @@
 //   tfm::printf("%s, %s %d, %.2d:%.2d\n", weekday, month, day, hour, min);
 //
 // The strange types here emphasize the type safety of the interface; it is
-// possible to print a std::string using the "%s" conversion, and a
+// possible to print a Flux::string using the "%s" conversion, and a
 // size_t using the "%d" conversion.  A similar result could be achieved
 // using either of the tfm::format() functions.  One prints on a user provided
 // stream:
@@ -61,9 +61,9 @@
 //   tfm::format(std::cerr, "%s, %s %d, %.2d:%.2d\n",
 //               weekday, month, day, hour, min);
 //
-// The other returns a std::string:
+// The other returns a Flux::string:
 //
-//   std::string date = tfm::format("%s, %s %d, %.2d:%.2d\n",
+//   Flux::string date = tfm::format("%s, %s %d, %.2d:%.2d\n",
 //                                  weekday, month, day, hour, min);
 //   std::cout << date;
 //
@@ -136,6 +136,7 @@ namespace tfm = tinyformat;
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include "flux.h"
 
 #ifndef TINYFORMAT_ERROR
 #   define TINYFORMAT_ERROR(reason) assert(0 && reason)
@@ -259,7 +260,7 @@ inline void formatTruncated(std::ostream& out, const T& value, int ntrunc)
 {
     std::ostringstream tmp;
     tmp << value;
-    std::string result = tmp.str();
+    Flux::string result = tmp.str();
     out.write(result.c_str(), std::min(ntrunc, static_cast<int>(result.size())));
 }
 #define TINYFORMAT_DEFINE_FORMAT_TRUNCATED_CSTR(type)       \
@@ -789,7 +790,7 @@ inline void formatImpl(std::ostream& out, const char* fmt,
             tmpStream.copyfmt(out);
             tmpStream.setf(std::ios::showpos);
             arg.format(tmpStream, fmt, fmtEnd, ntrunc);
-            std::string result = tmpStream.str(); // allocates... yuck.
+            Flux::string result = tmpStream.str(); // allocates... yuck.
             for(size_t i = 0, iend = result.size(); i < iend; ++i)
                 if(result[i] == '+') result[i] = ' ';
             out << result;
@@ -938,7 +939,7 @@ void format(std::ostream& out, const char* fmt, const Args&... args)
 /// Format list of arguments according to the given format string and return
 /// the result as a string.
 template<typename... Args>
-std::string format(const char* fmt, const Args&... args)
+Flux::string format(const char* fmt, const Args&... args)
 {
     std::ostringstream oss;
     format(oss, fmt, args...);
@@ -968,7 +969,7 @@ inline void format(std::ostream& out, const char* fmt)
     vformat(out, fmt, makeFormatList());
 }
 
-inline std::string format(const char* fmt)
+inline Flux::string format(const char* fmt)
 {
     std::ostringstream oss;
     format(oss, fmt);
@@ -995,7 +996,7 @@ void format(std::ostream& out, const char* fmt, TINYFORMAT_VARARGS(n))    \
 }                                                                         \
                                                                           \
 template<TINYFORMAT_ARGTYPES(n)>                                          \
-std::string format(const char* fmt, TINYFORMAT_VARARGS(n))                \
+Flux::string format(const char* fmt, TINYFORMAT_VARARGS(n))                \
 {                                                                         \
     std::ostringstream oss;                                               \
     format(oss, fmt, TINYFORMAT_PASSARGS(n));                             \

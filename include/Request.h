@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdio>
-#include <string>
+#include "flux.h"
 #include "tinyformat.h"
 
 
@@ -41,8 +41,6 @@ public:
 		// Write to the FastCGI data stream
 		FCGX_PutStr(reinterpret_cast<const char *>(data), len, this->request->out);
 	}
-
-
 
 	std::string GetParam(const std::string &str);
 

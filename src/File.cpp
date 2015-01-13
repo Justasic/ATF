@@ -1,3 +1,4 @@
+#include "flux.h"
 #include "file.h"
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -88,7 +89,7 @@ void File::KFlush()
 
 FILE *File::GetFILE()
 {
-	std::string flags;
+	Flux::string flags;
 	if (this->modes & (FS_READ | FS_WRITE))
 		flags = "rw";
 	else if ((this->modes & FS_READ) && !(this->modes & FS_WRITE))
@@ -107,7 +108,7 @@ FILE *File::GetFILE()
 ////////////////// FILESYSTEM CLASS ///////////////////////////////
 ///////////////////////////////////////////////////////////////////
 
-File *FileSystem::OpenFile(const std::string &path, fsMode_t mode)
+File *FileSystem::OpenFile(const Flux::string &path, fsMode_t mode)
 {
 	// Make sure the file exists
 	if (!IsFile(path))
@@ -149,7 +150,7 @@ void FileSystem::CloseFile(File *f)
 }
 
 
-bool FileSystem::IsDirectory(const std::string &str)
+bool FileSystem::IsDirectory(const Flux::string &str)
 {
 	struct stat fileinfo;
 
@@ -162,7 +163,7 @@ bool FileSystem::IsDirectory(const std::string &str)
 	return true;
 }
 
-bool FileSystem::IsFile(const std::string &file)
+bool FileSystem::IsFile(const Flux::string &file)
 {
 	struct stat st_buf;
 	memset(&st_buf, 0, sizeof(struct stat));
@@ -175,7 +176,7 @@ bool FileSystem::IsFile(const std::string &file)
 	return false;
 }
 
-bool FileSystem::FileExists(const std::string &file)
+bool FileSystem::FileExists(const Flux::string &file)
 {
 	struct stat sb;
 
@@ -200,7 +201,7 @@ bool FileSystem::FileExists(const std::string &file)
 	return true;
 }
 
-void FileSystem::MakeDirectory(const std::string &dir)
+void FileSystem::MakeDirectory(const Flux::string &dir)
 {
 	char tmp[256];
 	char *p = NULL;
@@ -224,12 +225,12 @@ void FileSystem::MakeDirectory(const std::string &dir)
 	mkdir(tmp, S_IRWXU);
 }
 
-std::string FileSystem::GetCurrentDirectory()
+Flux::string FileSystem::GetCurrentDirectory()
 {
 	// The posix 2001 standard states that getcwd will call malloc() to
 	// allocate a string, this is great because I hate static buffers.
 	char *cwd = getcwd(NULL, 0);
-	std::string str = cwd;
+	Flux::string str = cwd;
 	str += "/";
 	free(cwd);
 
@@ -237,9 +238,9 @@ std::string FileSystem::GetCurrentDirectory()
 }
 
 
-static inline std::vector<std::string> getdir(const std::string &dir)
+static inline Flux::vector getdir(const Flux::string &dir)
 {
-	std::vector<std::string> files;
+	Flux::vector files;
 	DIR *dp;
 	struct dirent *dirp;
 	if ((dp  = opendir(dir.c_str())) == NULL)
@@ -251,7 +252,7 @@ static inline std::vector<std::string> getdir(const std::string &dir)
 
 	while ((dirp = readdir(dp)) != NULL)
 	{
-		std::string dirn = dirp->d_name;
+		Flux::string dirn = dirp->d_name;
 		if (dirn != "." && dirn != "..")
 			files.push_back(dir + "/" + dirn);
 	}
@@ -260,10 +261,10 @@ static inline std::vector<std::string> getdir(const std::string &dir)
 	return files;
 }
 
-std::vector<std::string> FileSystem::DirectoryList(const std::string &dir)
+Flux::vector FileSystem::DirectoryList(const Flux::string &dir)
 {
-	std::vector<std::string> files;
-	std::vector<std::string> tmp;
+	Flux::vector files;
+	Flux::vector tmp;
 	if (IsDirectory(dir))
 	{
 		files = getdir(dir);
@@ -271,7 +272,7 @@ std::vector<std::string> FileSystem::DirectoryList(const std::string &dir)
 		{
 			if (IsDirectory(file))
 			{
-				std::vector<std::string> tmp2 = DirectoryList(file);
+				Flux::vector tmp2 = DirectoryList(file);
 				tmp.insert(tmp.end(), tmp2.begin(), tmp2.end());
 			}
 		}
