@@ -12,7 +12,15 @@
 #include "SocketException.h"
 #include "module.h"
 #include "file.h"
+#include "Config.h"
+#include "misc.h"
+#include <unistd.h>
 // #include "modules.h"
+
+// FIXME
+bool nocolor = false;
+time_t starttime = 0;
+Flux::string binary_dir = ".";
 
 Flux::string NoTermColor(const Flux::string &ret)
 {
@@ -84,8 +92,7 @@ void CheckLogDelete(Log *log)
 	if (!FileSystem::IsDirectory(dir))
 	{
 		Log(LOG_TERMINAL) << "Directory " << dir << " does not exist, making new directory.";
-		if (mkdir(Flux::string(dir).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0)
-			throw LogException("Failed to create directory "+dir+": "+Flux::string(strerror(errno)));
+		FileSystem::MakeDirectory(dir);
 	}
 
 	Flux::vector files = FileSystem::DirectoryList(dir);
@@ -104,9 +111,9 @@ void CheckLogDelete(Log *log)
 			Flux::string t = file.isolate('-', ' ').strip('-');
 			int timestamp = (int)t;
 
-			if (timestamp > (time(NULL) - 86400 * Config->LogAge) && timestamp != starttime)
+			if (timestamp > (time(NULL) - 86400 * config->LogAge) && timestamp != starttime)
 			{
-				Delete(file.c_str());
+				unlink(file.c_str());
 				Log(LOG_DEBUG) << "Deleted old logfile " << file;
 			}
 		}
@@ -158,10 +165,10 @@ Log::Log(LogType t, User *user, Command *command): type(t), u(user), c(command)
 Log::~Log()
 {
 	Flux::string LogColor;
-	if(Config)
+	if(config)
 	{
-		LogColor = Config->LogColor;
-		this->filename = CreateLogName(Config->LogFile, starttime);
+		LogColor = config->LogColor;
+		this->filename = CreateLogName(config->LogFile, starttime);
 	}
 	else
 	{
@@ -188,15 +195,15 @@ Log::~Log()
 			logstream << TimeStamp() << " [THREAD] " << message;
 			break;
 		case LOG_DEBUG:
-			if(dev || protocoldebug)
+			//if(dev || protocoldebug)
 			logstream << TimeStamp() << " " << message;
 			break;
 		case LOG_DNS:
-			if(protocoldebug)
+		//	if(protocoldebug)
 			logstream << TimeStamp() << " \033[34;0m[DNSEngine]" << LogColor << " " << message;
 			break;
 		case LOG_RAWIO:
-			if(protocoldebug)
+		//	if(protocoldebug)
 			logstream << TimeStamp() << " " << message;
 			break;
 		case LOG_CRITICAL:
@@ -206,11 +213,11 @@ Log::~Log()
 			logstream << TimeStamp() << " \033[22;33m[WARNING]" << LogColor << " " << message;
 			break;
 		case LOG_MEMORY:
-			if(memdebug)
+		//	if(memdebug)
 			std::cout << TimeStamp() << " [MEMORY] " << message << std::endl;
 			return; // ignore everything else, it doesn't matter
 		case LOG_TERMINAL:
-			if(InTerm())
+		//	if(InTerm())
 			// We allow colors here because it's supposed to be considered 'raw'
 			std::cout << raw << std::endl;
 			return;
@@ -219,10 +226,10 @@ Log::~Log()
 		Log(LOG_TERMINAL) << "\033[22;33m[UNDEFINED]" << LogColor << " " << message;
 	}
 
-	EventResult result;
-	FOREACH_RESULT(I_OnLog, OnLog(this), result);
-	if(result != EVENT_CONTINUE)
-		return;
+	//EventResult result;
+	//FOREACH_RESULT(I_OnLog, OnLog(this), result);
+	//if(result != EVENT_CONTINUE)
+	//	return;
 
 	if((type != LOG_SILENT || type != LOG_CRITICAL) && InTerm())
 		std::cout << (nocolor?NoTermColor(logstream.str()):logstream.str()) << std::endl;
@@ -243,10 +250,10 @@ Log::~Log()
 
 		if(!log.is_open())
 		{
-			if(!Config)
+			if(!config)
 				throw LogException("Cannot read log file from config! (is there a bot.conf?)");
 			else
-				throw LogException(Config->LogFile.empty()?"Cannot open Log File.":
+				throw LogException(config->LogFile.empty()?"Cannot open Log File.":
 			Flux::string("Failed to open Log File "+this->filename+": "+strerror(errno)).c_str());
 		}
 

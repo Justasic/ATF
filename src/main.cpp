@@ -17,6 +17,8 @@
 #include "Config.h"
 #include "Request.h"
 #include "flux.h"
+#include "timers.h"
+#include "Socket.h"
 
 std::atomic_bool quit;
 
@@ -97,7 +99,7 @@ void OpenListener(int sock_fd)
 
 int main(int argc, char **argv)
 {
-	std::vector<std::string> args(argv, argv+argc);
+	std::vector<Flux::string> args(argv, argv+argc);
 	quit = false;
 
 	// Parse our config before anything

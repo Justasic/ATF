@@ -161,6 +161,9 @@ FLEX_TARGET(LEXER ${CMAKE_SOURCE_DIR}/src/scanner.l ${CMAKE_BINARY_DIR}/lexer.cp
 BISON_TARGET(PARSER ${CMAKE_SOURCE_DIR}/src/parser.yy ${CMAKE_BINARY_DIR}/parser.cpp)
 ADD_FLEX_BISON_DEPENDENCY(LEXER PARSER)
 
+# include our function checks
+include(systemfuncs)
+
 # Make sure if the platform we're on requires libdl that we use it.
 find_library(LIBDL dl)
 
@@ -196,6 +199,8 @@ if (LIBDL)
 endif (LIBDL)
 target_link_libraries(${PROJECT_NAME} ${MYSQL_LIBRARIES} ${FastCGI_LIBRARIES})
 # add_dependencies(${PROJECT_NAME} license_headers)
+
+add_subdirectory(modules)
 
 # Do the make install
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)

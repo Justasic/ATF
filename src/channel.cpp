@@ -9,6 +9,9 @@
  * Based on the original code of Anope by The Anope Team.
  */
 #include "channel.h"
+#include "network.h"
+#include "user.h"
+
 std::map<Channel*, std::vector<User*>> UChanMap;
 // std::map<User*, std::vector<Channel*>> CUserMap;
 Channel::Channel(Network *net, const Flux::string &nname): name(nname), n(net), topic_time(0), creation_time(0)
@@ -57,10 +60,10 @@ User *Channel::FindUser(const Flux::string &usr)
 
 void Channel::SendJoin()
 {
-	if(!this->n || !this->n->b)
+	if(!this->n)
 		return; // incase we have some weird shit
 
-	this->n->ircproto->join(this->name);
+	this->n->proto.join(this->name);
 	this->SendWho();
 	this->n->s->Write("MODE %s", this->name.c_str());
 }
@@ -88,31 +91,30 @@ void Channel::DelUser(User *u)
 
 void Channel::SendPart(const Flux::string &reason)
 {
-	this->n->ircproto->part(this->name, reason);
+	this->n->proto.part(this->name, reason);
 }
 
 void Channel::SendMessage(const Flux::string &message)
 {
-	if(this->n->b)
-		this->n->ircproto->privmsg(this->name, message);
+	this->n->proto.privmsg(this->name, message);
 }
 
 void Channel::SendAction(const Flux::string &message)
 {
-	this->n->ircproto->action(this->name, message);
+	this->n->proto.action(this->name, message);
 }
 
 void Channel::SendNotice(const Flux::string &message)
 {
-	this->n->ircproto->notice(this->name, message);
+	this->n->proto.notice(this->name, message);
 }
 
 void Channel::SendWho()
 {
-	if(!this->n || !this->n->b)
+	if(!this->n)
 		return; // incase we have some weird shit
 
-	this->n->ircproto->who(this->name);
+	this->n->proto.who(this->name);
 }
 /****************************************************************/
 // void QuitUser(Network *n, User *u)

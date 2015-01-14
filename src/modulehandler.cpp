@@ -9,8 +9,10 @@
  * Based on the original code of Anope by The Anope Team.
  */
 #include "module.h"
-#include "INIReader.h"
-
+#include "file.h"
+#include "flux.h"
+#include "Config.h"
+#include <list>
 /**
  * \fn bool ModuleHandler::Attach(Implementation i, Module *mod)
  * \brief Module hook for the FOREACH_MOD macro
@@ -101,10 +103,10 @@ ModErr ModuleHandler::LoadModule(const Flux::string &modname)
 	if(FindModule(modname))
 		return MOD_ERR_EXISTS;
 
-	Log() << "\033[0m[\033[1;32m*\033[0m] Loading Module:\t\033[1;32m" << modname << Config->LogColor;
+	Log() << "\033[0m[\033[1;32m*\033[0m] Loading Module:\t\033[1;32m" << modname << config->LogColor;
 
 	Flux::string mdir = binary_dir + "/runtime/"+ (modname.search(".so")?modname+".XXXXXX":modname+".so.XXXXXX");
-	Flux::string input = Flux::string(binary_dir + "/" + (Config->ModuleDir.empty()?modname:Config->ModuleDir+"/"+modname) + ".so").replace_all_cs("//","/");
+	Flux::string input = Flux::string(binary_dir + "/" + (config->ModuleDir.empty()?modname:config->ModuleDir+"/"+modname) + ".so").replace_all_cs("//","/");
 
 	TextFile mod(input);
 	Flux::string output = TextFile::TempFile(mdir);
@@ -158,7 +160,7 @@ ModErr ModuleHandler::LoadModule(const Flux::string &modname)
 	m->filename = (modname.search(".so")?modname:modname+".so");
 	m->handle = reinterpret_cast<void*>(handle); //we'll convert to auto later, for now reinterpret_cast.
 
-	FOREACH_MOD(I_OnModuleLoad, OnModuleLoad(m));
+	//FOREACH_MOD(I_OnModuleLoad, OnModuleLoad(m));
 
 	return MOD_ERR_OK;
 }
@@ -176,7 +178,6 @@ bool ModuleHandler::DeleteModule(Module *m)
     void (*df)(Module*) = class_cast<void (*)(Module*)>(dlsym(m->handle, "ModunInit"));
     const char *err = dlerror();
 
-    SET_SEGV_LOCATION();
     if (!df && err && *err)
     {
 		Log(LOG_DEBUG) << "No destroy function found for " << m->name << ", chancing delete...";
@@ -203,7 +204,7 @@ bool ModuleHandler::Unload(Module *m)
     if(!m || m->GetPermanent())
 	return false;
 
-    FOREACH_MOD(I_OnModuleUnload, OnModuleUnload(m));
+    //FOREACH_MOD(I_OnModuleUnload, OnModuleUnload(m));
     return DeleteModule(m);
 }
 
@@ -214,26 +215,10 @@ void ModuleHandler::UnloadAll()
 	Module *m = *it;
 	++it;
 	// ignore Unload function because we're forcing a unload regardless of whether it's permanent or not.
-	FOREACH_MOD(I_OnModuleUnload, OnModuleUnload(m));
+	//FOREACH_MOD(I_OnModuleUnload, OnModuleUnload(m));
 	DeleteModule(m);
     }
     Modules.clear();
-}
-
-Flux::string ModuleHandler::DecodePriority(ModulePriority p)
-{
-    switch(p)
-    {
-	case PRIORITY_FIRST:
-	    return "FIRST";
-	case PRIORITY_DONTCARE:
-	    return "DON'T CARE";
-	case PRIORITY_LAST:
-	    return "LAST";
-	default:
-	    return "";
-    }
-    return "";
 }
 
 void ModuleHandler::SanitizeRuntime()
@@ -241,16 +226,15 @@ void ModuleHandler::SanitizeRuntime()
     Log(LOG_DEBUG) << "Cleaning up runtime directory.";
     Flux::string dirbuf = binary_dir+"/runtime/";
 
-    if(!TextFile::IsDirectory(dirbuf))
+    if(!FileSystem::IsDirectory(dirbuf))
     {
-	if(mkdir(dirbuf.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0)
-	    throw CoreException(printfify("Error making new runtime directory: %s", strerror(errno)));
+			FileSystem::MakeDirectory(dirbuf);
     }
     else
     {
-	Flux::vector files = TextFile::DirectoryListing(dirbuf);
+	Flux::vector files = FileSystem::DirectoryList(dirbuf);
 	for(auto it : files)
-	    Delete(Flux::string(dirbuf+it).c_str());
+	    unlink(Flux::string(dirbuf+it).c_str());
     }
 }
 
@@ -271,23 +255,23 @@ Module *FindModule(const Flux::string &name)
     return nullptr;
 }
 
-/******************Configuration variables***********************/
+/******************configuration variables***********************/
 /**Rehash void
- * \fn void ReadConfig()
+ * \fn void Readconfig()
  * This will re-read the config file values when told to do so
  */
 void LoadModules()
 {
-    for(unsigned i = 0; i < Config->Modules.size(); ++i)
+    for(unsigned i = 0; i < config->Modules.size(); ++i)
     {
-	ModErr e = ModuleHandler::LoadModule(Config->Modules[i]);
+	ModErr e = ModuleHandler::LoadModule(config->Modules[i]);
 	//SocketEngine::Process(true);
 	if(e != MOD_ERR_OK)
 	{
-	    Log() << "\n\033[0m[\033[1;31m*\033[0m] " << Config->Modules[i] << ": " << DecodeModErr(e) << Config->LogColor << "\n";
+	    Log() << "\n\033[0m[\033[1;31m*\033[0m] " << config->Modules[i] << ": " << DecodeModErr(e) << config->LogColor << "\n";
 	    throw CoreException("Module Load Error");
 	}
     }
     TimerManager::TickTimers(time(NULL));
 }
-/******************End Configuration variables********************/
+/******************End configuration variables********************/

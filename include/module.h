@@ -64,6 +64,8 @@ enum ModErr
 	MOD_ERR_EXCEPTION
 };
 
+extern Module *FindModule(const Flux::string &name);
+
 class Module
 {
 	Flux::string author, version;

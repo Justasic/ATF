@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <cstdarg>
 #include <cstring>
+#include "flux.h"
+#include <unistd.h>
 
 #ifndef NDEBUG
 # define dprintf(...) printf(__VA_ARGS__)
@@ -28,4 +30,14 @@ inline void *memrev(void *dest, const void *src, size_t n)
 	}
 	// Return provided buffer
 	return dest;
+}
+
+inline bool InTerm()
+{
+	    return isatty(fileno(stdout) && isatty(fileno(stdin)) && isatty(fileno(stderr)));
+}
+
+namespace Flux
+{
+		Flux::string Sanitize(const string &string);
 }

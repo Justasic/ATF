@@ -8,9 +8,21 @@
  * Based on the original code of CIA.vc by Micah Dowty
  * Based on the original code of Anope by The Anope Team.
  */
+#include <queue>
 #include "ircproto.h"
-#include "bot.h"
-#include "INIReader.h"
+#include "flux.h"
+#include "timers.h"
+#include "log.h"
+#include "network.h"
+#include "Config.h"
+
+// FIXME: This needs to be replaced with tinyformat.
+#define BUFSIZE (1 << 16)
+
+void Send_Global(const Flux::string &str);
+void Send_Global(const char *fmt, ...);
+
+
 /**
  *\file  ircproto.cpp
  *\brief Contains the IRCProto class.
@@ -27,13 +39,13 @@ class SendQTimer : public Timer
 		// Number of lines sent before burst
 		int linessent;
 		// Have we sent the burst yet?
-		inline bool HasBurst() const { return (linessent <= Config->BurstRate); }
+		inline bool HasBurst() const { return (linessent <= config->BurstRate); }
     } sqo;
 
 public:
 	inline bool NetworkReady() const { return (this->n && this->n->s && this->n->s->GetStatus(SF_CONNECTED)); }
 
-	SendQTimer(const Network *net) : Timer(Config->SendQRate, time(NULL), true), sent(0), n(net)
+	SendQTimer(const Network *net) : Timer(config->SendQRate, time(NULL), true), sent(0), n(net)
 	{
 		Log(LOG_DEBUG) << "Initialized a SengQ Timer";
 		sqo.linessent = 0;
@@ -51,7 +63,7 @@ public:
 
 	void SendBuffered(const Flux::string &buffer)
 	{
-		if(Config->SendQEnabled)
+		if(config->SendQEnabled)
 		{
 			if(this->sqo.HasBurst() && NetworkReady())
 			{
@@ -72,7 +84,7 @@ public:
 
 	void Tick(time_t)
 	{
-		while(!sqo.SendQ.empty() && ++sent <= Config->SendQLines)
+		while(!sqo.SendQ.empty() && ++sent <= config->SendQLines)
 		{
 			if(this->n && this->n->s && this->n->s->GetStatus(SF_CONNECTED))
 				this->n->s->Write(sqo.SendQ.front());
@@ -137,8 +149,7 @@ void IRCProto::privmsg(const Flux::string &where, const char *fmt, ...)
  */
 void IRCProto::privmsg(const Flux::string &where, const Flux::string &msg)
 {
-	Flux::vector tokens = msg.explode('\n');
-	for (auto it : tokens)
+	for (auto it : msg.explode('\n'))
 		this->Raw("PRIVMSG %s :%s\n", where.c_str(), it.c_str());
 }
 /**
@@ -418,8 +429,8 @@ void IRCProto::introduce_client(const Flux::string &nickname, const Flux::string
 	this->Raw("USER %s %s %s :%s\n", ident.c_str(), hostname, net->hostname.c_str(), realname.c_str());
 
     // FIXME: this.
-//     if(!Config->ServerPassword.empty())
-// 	this->Raw("PASS %s\n", Config->ServerPassword.c_str());
+//     if(!config->ServerPassword.empty())
+// 	this->Raw("PASS %s\n", config->ServerPassword.c_str());
 }
 
 void IRCProto::invite(const Flux::string &nickname, const Flux::string &channel)
@@ -530,10 +541,9 @@ void GlobalProto::privmsg(const Flux::string &where, const char *fmt, ...)
  */
 void GlobalProto::privmsg(const Flux::string &where, const Flux::string &msg)
 {
-	sepstream sep(msg, '\n');
-	Flux::string tok;
-	while(sep.GetToken(tok))
-	Send_Global("PRIVMSG %s :%s\n", where.c_str(), tok.c_str());
+		Flux::vector tokens = msg.explode("\n");
+		for (auto it : tokens)
+				Send_Global("PRIVMSG %s :%s\n", where.c_str(), it.c_str());
 }
 /**
  * \brief Sends a IRC notice to the user or channel
@@ -558,10 +568,8 @@ void GlobalProto::notice(const Flux::string &where, const char *fmt, ...)
  */
 void GlobalProto::notice(const Flux::string &where, const Flux::string &msg)
 {
-	sepstream sep(msg, '\n');
-	Flux::string tok;
-	while(sep.GetToken(tok))
-		Send_Global("NOTICE %s :%s\n", where.c_str(), tok.c_str());
+		for (auto it : msg.explode("\n"))
+				Send_Global("NOTICE %s :%s\n", where.c_str(), it.c_str());
 }
 /**
  * \brief Sends a IRC action (/me) to the user or channel
@@ -586,10 +594,8 @@ void GlobalProto::action(const Flux::string &where, const char *fmt, ...)
  */
 void GlobalProto::action(const Flux::string &where, const Flux::string &msg)
 {
-	sepstream sep(msg, '\n');
-	Flux::string tok;
-	while(sep.GetToken(tok))
-	Send_Global("PRIVMSG %s :\001ACTION %s\001\n", where.c_str(), tok.c_str());
+		for (auto it : msg.explode("\n"))
+				Send_Global("PRIVMSG %s :\001ACTION %s\001\n", where.c_str(), it.c_str());
 }
 /*****************************************************************************************/
 /**
@@ -783,7 +789,7 @@ void GlobalProto::mode(const Flux::string &dest, const Flux::string &chanmode)
 void Send_Global(const Flux::string &str)
 {
 	Network *n;
-	for(auto it : Networks)
+	for(auto it : Network::Networks)
 	{
 		if((n = it.second) && n->s && n->s->GetStatus(SF_CONNECTED))
 		{

@@ -18,16 +18,16 @@ public:
 
 	~Request();
 
-	inline void Write(const std::string &str)
+	inline void Write(const Flux::string &str)
 	{
 		this->WriteData(str.c_str(), str.length());
 	}
 
 	// Write to the data stream as plain text
 	template<typename... Args>
-	void Write(const std::string &str, const Args&... args)
+	void Write(const Flux::string &str, const Args&... args)
 	{
-		std::string tmp = tfm::format(str.c_str(), args...);
+		Flux::string tmp = tfm::format(str.c_str(), args...);
 		this->WriteData(tmp.c_str(), tmp.length());
 	}
 
@@ -42,7 +42,7 @@ public:
 		FCGX_PutStr(reinterpret_cast<const char *>(data), len, this->request->out);
 	}
 
-	std::string GetParam(const std::string &str);
+	Flux::string GetParam(const Flux::string &str);
 
 	void SetStatus(int st);
 };

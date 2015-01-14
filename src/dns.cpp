@@ -11,8 +11,8 @@
 
 #include "dns.h"
 #include "Socket.h"
-#include "INIReader.h"
-// #include "modules.h"
+#include "modules.h"
+#include "Config.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -62,10 +62,10 @@ DNSQuery::DNSQuery(const DNSPacket &p)
 	this->error = DNS_ERROR_NONE;
 }
 
-DNSRequest::DNSRequest(const Flux::string &addr, QueryType qt, bool cache, Module *c) : Timer(Config->DNSTimeout), Question(addr, qt), use_cache(cache), id(0), creator(c)
+DNSRequest::DNSRequest(const Flux::string &addr, QueryType qt, bool cache, Module *c) : Timer(config->DNSTimeout), Question(addr, qt), use_cache(cache), id(0), creator(c)
 {
 	if (!DNSEngine)
-		DNSEngine = new DNSManager(Config->NameServer, DNSManager::DNSPort);
+		DNSEngine = new DNSManager(config->NameServer, DNSManager::DNSPort);
 	if (DNSEngine->packets.size() == 65535)
 		throw SocketException("DNS queue full");
 
@@ -127,14 +127,13 @@ void DNSPacket::PackName(unsigned char *output, unsigned short output_size, unsi
 
 	Log(LOG_DNS) << "Resolver: PackName packing " << name;
 
-	sepstream sep(name, '.');
-	Flux::string token;
+	Flux::vector tokens = name.explode(".");
 
-	while (sep.GetToken(token))
+	for (auto it : tokens)
 	{
-		output[pos++] = token.length();
-		memcpy(&output[pos], token.c_str(), token.length());
-		pos += token.length();
+			output[pos++] = it.length();
+			memcpy(&output[pos], it.c_str(), it.length());
+			pos += it.length();
 	}
 
 	output[pos++] = 0;

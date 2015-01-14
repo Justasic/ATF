@@ -8,7 +8,7 @@ extern FILE *yyin;
 // extern void yylex_destroy();
 extern int yylineno;
 
-Config::Config(const std::string &filepath) : filepath(filepath)
+Config::Config(const Flux::string &filepath) : filepath(filepath)
 {
 	this->p = new yy::Parser(this);
 }

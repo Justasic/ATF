@@ -32,7 +32,7 @@ Request::~Request()
 // 	FCGX_PutStr(reinterpret_cast<const char *>(data), len, this->request->out);
 // }
 
-std::string Request::GetParam(const std::string &str)
+Flux::string Request::GetParam(const Flux::string &str)
 {
 	return FCGX_GetParam(str.c_str(), this->request->envp);
 }

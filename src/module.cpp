@@ -10,10 +10,10 @@
  */
 
 #include "module.h"
+#include <list>
 // This code sucks, you know it and I know it.
 // Move on and call me an idiot later.
 std::list<Module*> Modules;
-EventsVector ModuleHandler::EventHandlers[I_END];
 /**
  * \fn Module::Module(Flux::string n)
  * \brief Module Constructor
@@ -22,15 +22,13 @@ EventsVector ModuleHandler::EventHandlers[I_END];
  * \param priority The Module priority
  */
 
-Module::Module(const Flux::string &n, ModType m): author(""), version(""), loadtime(time(NULL)), Priority(PRIORITY_DONTCARE), permanent(false), handle(nullptr), name(n), filename(""), filepath("")
+Module::Module(const Flux::string &n, ModType m): author(""), version(""), loadtime(time(NULL)), permanent(false), handle(nullptr), name(n), filename(""), filepath("")
 {
-    SET_SEGV_LOCATION();
     if (FindModule(this->name))
 		throw ModuleException("Module already exists!");
 
     Modules.push_back(this);
-    if(!nofork)
-		Log() << "Loaded Module " << n;
+	Log() << "Loaded Module " << n;
 }
 
 Module::~Module()
@@ -53,11 +51,6 @@ void Module::SetAuthor(const Flux::string &person)
 void Module::SetVersion(const Flux::string &ver)
 {
     this->version = ver;
-}
-
-void Module::SetPriority(ModulePriority p)
-{
-    this->Priority = p;
 }
 
 void Module::SetPermanent(bool state)

@@ -3,12 +3,12 @@
 #include <vector>
 #include <cstdlib>
 #include <unistd.h>
-#include <string>
 #include <cstring>
 #include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <cstdint>
+#include "flux.h"
 
 #include "EventDispatcher.h"
 
@@ -19,11 +19,11 @@ namespace yy {
 
 class Config
 {
-	const std::string filepath;
+	const Flux::string filepath;
 	// The Bison++ parser class
 	yy::Parser *p;
 public:
-	Config(const std::string &fp);
+	Config(const Flux::string &fp);
 	~Config();
 
 	// Parse the config (again)
@@ -33,22 +33,37 @@ public:
 	bool daemonize;
 
 	// PID file path
-	std::string pidfile;
+	Flux::string pidfile;
 
 	// MySQL authentication and connection information
-	std::string username;
-	std::string password;
-	std::string database;
-	std::string hostname;
+	Flux::string username;
+	Flux::string password;
+	Flux::string database;
+	Flux::string hostname;
 	short int mysqlport;
 
 	// Port and interface to bind to
-	std::string bind;
+	Flux::string bind;
 	short int port;
 
 	//////////////////////////////////////////////////////////
 	// IRC-socket related variables
 	int SockWait;
+	int SendQLines;
+	bool SendQEnabled;
+	int BurstRate;
+	int SendQRate;
+
+	//////////////////////////////////////////////////////////
+	// DNS resolver related variables
+	int DNSTimeout;
+	Flux::string NameServer;
+
+	/////////////////////////////////////////////////////////
+	// Log related variables
+	time_t LogAge;
+	Flux::string LogFile;
+	Flux::string LogColor;
 
 	// Call an event.
 	Event<Config*> OnRehash;

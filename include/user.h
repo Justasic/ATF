@@ -10,6 +10,7 @@
  */
 #pragma once
 #include "ircproto.h"
+#include <vector>
 
 class Channel;
 
@@ -39,3 +40,5 @@ public:
 	void SendPrivmsg(const Flux::string&);
 	void SendPrivmsg(const char*, ...);
 };
+
+extern std::map<User*, std::vector<Channel*>> CUserMap;

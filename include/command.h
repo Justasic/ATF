@@ -9,11 +9,10 @@
  * Based on the original code of Anope by The Anope Team.
  */
 #pragma once
-#ifndef command_h
-#define command_h
 #include "user.h"
 #include "flux.h"
-#include "module.h"
+
+class Module;
 
 /**
  * \class IsoHost
@@ -88,4 +87,3 @@ public:
 	virtual void OnList(User *u);
 	virtual void OnSyntaxError(CommandSource&, const Flux::string&);
 };
-#endif

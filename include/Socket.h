@@ -354,7 +354,7 @@ public:
 		if (fmt.empty())
 			return;
 
-		this->WriteBuffer += tfm::format(fmt, args...) + "\n";
+		this->WriteBuffer += tfm::format(fmt.c_str(), args...) + "\n";
 		SocketEngine::MarkWritable(this);
 	}
 

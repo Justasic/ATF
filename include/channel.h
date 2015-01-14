@@ -72,3 +72,5 @@ public:
 		this->SendNotice(tfm::format(fmt, args...));
 	}
 };
+
+extern std::map<Channel*, std::vector<User*>> UChanMap;

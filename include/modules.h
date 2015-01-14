@@ -11,7 +11,7 @@
 #pragma once
 #include "module.h"
 #include "network.h" //We'll solve includes later
-#include "bot.h"
+//#include "bot.h"
 
 extern Flux::insensitive_map<Network*> Networks;
 

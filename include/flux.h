@@ -342,7 +342,7 @@ namespace Flux {
 			return ret;
 		}
 
-		inline std::vector<string> explode(const string &delim)
+		inline std::vector<string> explode(const string &delim) const
 		{
 			size_t start = 0, end = 0;
 			std::vector<string> ret;

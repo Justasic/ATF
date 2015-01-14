@@ -13,6 +13,7 @@
 
 #include "Socket.h"
 #include "timers.h"
+#include "modules.h"
 
 /** Valid query types
  */
@@ -61,6 +62,7 @@ enum DNSError
 	DNS_ERROR_INVALIDTYPE
 };
 
+class DNSPacket;
 
 struct Question
 {
