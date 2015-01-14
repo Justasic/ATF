@@ -58,7 +58,7 @@ struct iSupport
     int TopicLen;
 };
 
-class Network : public ConnectionSocket, public BufferedSocket, public Timer
+class Network
 {
 protected:
 	bool disconnecting, issynced;
@@ -69,7 +69,7 @@ public:
 	// ReconnectTimer if we have one
 	ReconnectTimer *RTimer;
 	// The socket
-	//     NetworkSocket *s;
+	NetworkSocket *s;
 	// What that network supports
 	iSupport isupport;
 	// When we join a network but aren't synced yet
@@ -131,20 +131,25 @@ public:
 	bool Disconnect(const Flux::string&);
 	// Connect to the network
 	bool Connect();
+};
 
-
-	//////////////////////////////////////////////////////////
-	// Reconnect Timer related functions
+class ReconnectTimer : public Timer
+{
+	Network *n;
+public:
 	ReconnectTimer(int, Network*);
 	void Tick(time_t);
+};
 
-
-	//////////////////////////////////////////////////////////
-	// Actual Socket related functions
+class NetworkSocket : public ConnectionSocket, public BufferedSocket
+{
+public:
+	NetworkSocket(Network*);
+	~NetworkSocket();
+	Network *net;
 	int pings;
 	bool Read(const Flux::string&);
 	bool ProcessWrite();
 	void OnConnect();
 	void OnError(const Flux::string&);
-
 };
