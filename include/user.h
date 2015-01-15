@@ -10,6 +10,7 @@
  */
 #pragma once
 #include "ircproto.h"
+#include "tinyformat.h"
 #include <vector>
 
 class Channel;
@@ -32,13 +33,14 @@ public:
 	// Functions
 	void AddChan(Channel*);
 	void DelChan(Channel*);
-	Channel *findchannel(const Flux::string&);
+	Channel *FindChannel(const Flux::string&);
 	void SendWho();
 	virtual void SetNewNick(const Flux::string&);
 	virtual void SendMessage(const Flux::string&);
-	virtual void SendMessage(const char*, ...);
-	void SendPrivmsg(const Flux::string&);
-	void SendPrivmsg(const char*, ...);
+	virtual void SendPrivmsg(const Flux::string&);
+
+	template<typename... Args> void SendMessage(const Flux::string &fmt, const Args&... args) { this->SendMessage(tfm::format(fmt, args...)); }
+	template<typename... Args> void SendPrivmsg(const Flux::string &fmt, const Args&... args) { this->SendPrivmsg(tfm::format(fmt, args...)); }
 };
 
 extern std::map<User*, std::vector<Channel*>> CUserMap;

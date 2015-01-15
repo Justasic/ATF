@@ -127,8 +127,12 @@ public:
 	// Disconnect from this network
 	bool Disconnect();
 	// Same as above except with a message
-	bool Disconnect(const char *fmt, ...);
 	bool Disconnect(const Flux::string&);
+	template<typename... Args>
+	bool Disconnect(const Flux::string &fmt, const Args&... args)
+	{
+		this->Disconnect(tfm::format(fmt, args...));
+	}
 	// Connect to the network
 	bool Connect();
 };

@@ -11,23 +11,10 @@
 #pragma once
 #include "user.h"
 #include "flux.h"
+#include "tinyformat.h"
+#include <map>
 
 class Module;
-
-/**
- * \class IsoHost
- * \brief Wrapper for an irc host
- * This was written by Justasic to break up the parts of a messages host for easier use.
- */
-class IsoHost
-{
-public:
-	IsoHost(const Flux::string&);
-	Flux::string raw;
-	Flux::string nick;
-	Flux::string host;
-	Flux::string ident;
-};
 
 enum CommandType
 {
@@ -49,10 +36,14 @@ struct CommandSource
 // 	Bot *b;
 	Flux::string command;
 	Flux::string raw;
-	std::vector<Flux::string> params;
+	Flux::vector params;
 
-	void Reply(const char *fmt, ...);
-	void Reply(const wchar_t *fmt, ...);
+	template<typename... Args>
+	void Reply(const Flux::string &fmt, const Args&... args)
+	{
+		this->Reply(tfm::format(fmt.c_str(), args...));
+	}
+
 	void Reply(const Flux::string&);
 };
 
@@ -65,7 +56,7 @@ struct CommandSource
 class Command
 {
 	Flux::string desc;
-	std::vector<Flux::string> syntax;
+	Flux::vector syntax;
 	CommandType type;
 public:
 	size_t MaxParams;
@@ -82,8 +73,12 @@ protected:
 public:
 	const Flux::string &GetDesc() const;
 	const CommandType GetType() const;
-	virtual void Run(CommandSource&, const std::vector<Flux::string> &params);
+	virtual void Run(CommandSource&, const Flux::vector &params);
 	virtual bool OnHelp(CommandSource&, const Flux::string&);
 	virtual void OnList(User *u);
 	virtual void OnSyntaxError(CommandSource&, const Flux::string&);
 };
+
+typedef std::map<Flux::string, Command*, ci::less> CommandMap;
+
+extern Command *FindCommand(const Flux::string &name, CommandType type);

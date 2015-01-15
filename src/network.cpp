@@ -12,9 +12,11 @@
 #include "network.h"
 #include "dns.h"
 #include "module.h"
+#include "Config.h"
 
 Flux::insensitive_map<Network*> Network::Networks;
 extern void process(Network *n, const Flux::string &buffer);
+bool quitting = 0;
 
 Network::Network(const Flux::string &host, const Flux::string &p, const Flux::string &n): disconnecting(false),
 issynced(false), RTimer(nullptr), s(nullptr), proto(this), hostname(host), port(p), CurHost(0)
@@ -85,20 +87,6 @@ bool Network::Disconnect()
 	return true;
 }
 
-bool Network::Disconnect(const char *fmt, ...)
-{
-	va_list args;
-	char buffer[BUFSIZE] = "";
-	if(fmt)
-	{
-		va_start(args, fmt);
-		vsnprintf(buffer, sizeof(buffer), fmt, args);
-		this->Disconnect(Flux::string(buffer));
-		va_end(args);
-	}
-	return true;
-}
-
 bool Network::Disconnect(const Flux::string &buf)
 {
 	if(!buf.empty() && this->s)
@@ -163,9 +151,9 @@ NetworkSocket::~NetworkSocket()
 	if(!this->net->IsDisconnecting())
 	{
 		Log() << "Connection to " << net->name << " [" << net->GetConHost() << ':'
-		<< net->port << "] Failed! Retrying in " << Config->RetryWait << " seconds.";
+		<< net->port << "] Failed! Retrying in " << config->RetryWait << " seconds.";
 
-		new ReconnectTimer(Config->RetryWait, this->net);
+		new ReconnectTimer(config->RetryWait, this->net);
 	}
 }
 
@@ -175,7 +163,8 @@ bool NetworkSocket::Read(const Flux::string &buf)
 	if(buf.empty())
 		return true;
 
-	Log(LOG_RAWIO) << '[' << this->net->name << "] " << FixBuffer(buf);
+// 	Log(LOG_RAWIO) << '[' << this->net->name << "] " << FixBuffer(buf);
+	Log(LOG_RAWIO) << '[' << this->net->name << "] " << buf;
 	Flux::vector params = buf.explode(" ");
 
 	if(!params.empty() && params[0].search_ci("ERROR"))
@@ -200,8 +189,8 @@ void NetworkSocket::OnConnect()
 // 	Log(LOG_TERMINAL) << "Successfully connected to " << this->net->name << " ["
 // 	<< this->net->hostname << ':' << this->net->port << "] (" << this->net->GetConHost() << ")";
 //
-// 	new Bot(this->net, printfify("%stmp%03d", Config->NicknamePrefix.strip('-').c_str(),
-// 								 randint(0, 999)), Config->Ident, Config->Realname);
+// 	new Bot(this->net, printfify("%stmp%03d", config->NicknamePrefix.strip('-').c_str(),
+// 								 randint(0, 999)), config->Ident, config->Realname);
 //
 // 	this->net->b->introduce();
 // 	FOREACH_MOD(I_OnPostConnect, OnPostConnect(this, this->net));
@@ -216,7 +205,8 @@ void NetworkSocket::OnError(const Flux::string &buf)
 
 bool NetworkSocket::ProcessWrite()
 {
-	Log(LOG_RAWIO) << '[' << this->net->name << ']' << ' ' << FixBuffer(this->WriteBuffer);
+// 	Log(LOG_RAWIO) << '[' << this->net->name << ']' << ' ' << FixBuffer(this->WriteBuffer);
+	Log(LOG_RAWIO) << '[' << this->net->name << ']' << ' ' << this->WriteBuffer;
 	return ConnectionSocket::ProcessWrite() && BufferedSocket::ProcessWrite();
 }
 
@@ -296,9 +286,9 @@ void ReconnectTimer::Tick(time_t)
 	{
 		n->s = nullptr; // ###: Does this memleak?
 		Log() << "Connection to " << n->name << " [" << n->GetConHost() << ':'
-		<< n->port << "] Failed! (" << e.GetReason() << ") Retrying in " << Config->RetryWait << " seconds.";
+		<< n->port << "] Failed! (" << e.GetReason() << ") Retrying in " << config->RetryWait << " seconds.";
 
-		new ReconnectTimer(Config->RetryWait, n);
+		new ReconnectTimer(config->RetryWait, n);
 		return;
 	}
 	n->RTimer = nullptr;

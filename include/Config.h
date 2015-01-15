@@ -53,6 +53,7 @@ public:
 	bool SendQEnabled;
 	int BurstRate;
 	int SendQRate;
+	int RetryWait;
 
 	//////////////////////////////////////////////////////////
 	// DNS resolver related variables
