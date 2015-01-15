@@ -10,11 +10,11 @@
  */
 
 #include "network.h"
-#include "bot.h"
 #include "dns.h"
 #include "module.h"
 
 Flux::insensitive_map<Network*> Network::Networks;
+extern void process(Network *n, const Flux::string &buffer);
 
 Network::Network(const Flux::string &host, const Flux::string &p, const Flux::string &n): disconnecting(false),
 issynced(false), RTimer(nullptr), s(nullptr), proto(this), hostname(host), port(p), CurHost(0)
@@ -77,12 +77,6 @@ bool Network::Disconnect()
 	// Check if we have a socket to send on
 	if(!this->s)
 		return false;
-	// Delete the bot object
-	if(this->proto)
-	{
-		delete this->proto;
-		this->proto = nullptr;
-	}
 	// We'll let the socket engine delete the socket
 	this->s->SetDead(true);
 	// say this network is disconnecting
@@ -107,8 +101,8 @@ bool Network::Disconnect(const char *fmt, ...)
 
 bool Network::Disconnect(const Flux::string &buf)
 {
-	if(!buf.empty() && this->s && this->proto)
-		this->proto->quit(buf);
+	if(!buf.empty() && this->s)
+		this->proto.quit(buf);
 	this->Disconnect();
 	return true;
 }
@@ -136,7 +130,7 @@ void Network::Sync()
 
 	this->servername = this->isupport.ServerHost;
 	this->issynced = true;
-	FOREACH_MOD(I_OnNetworkSync, OnNetworkSync(this));
+// 	FOREACH_MOD(I_OnNetworkSync, OnNetworkSync(this));
 	Log(LOG_DEBUG) << "Network " << this->name << " is synced!";
 }
 
@@ -182,11 +176,11 @@ bool NetworkSocket::Read(const Flux::string &buf)
 		return true;
 
 	Log(LOG_RAWIO) << '[' << this->net->name << "] " << FixBuffer(buf);
-	Flux::vector params = ParamitizeString(buf, ' ');
+	Flux::vector params = buf.explode(" ");
 
 	if(!params.empty() && params[0].search_ci("ERROR"))
 	{
-		FOREACH_MOD(I_OnSocketError, OnSocketError(buf));
+// 		FOREACH_MOD(I_OnSocketError, OnSocketError(buf));
 		Log(LOG_TERMINAL) << "Socket Error, Closing socket!";
 		return false; //Socket is dead so we'll let the socket engine handle it
 	}
@@ -231,10 +225,10 @@ bool Network::Connect()
 {
 	this->disconnecting = false;
 	// ###: Does ANT load channels it was in?
-	EventResult e;
-	FOREACH_RESULT(I_OnPreConnect, OnPreConnect(this), e);
-	if(e != EVENT_CONTINUE)
-		return false;
+// 	EventResult e;
+// 	FOREACH_RESULT(I_OnPreConnect, OnPreConnect(this), e);
+// 	if(e != EVENT_CONTINUE)
+// 		return false;
 
 	if(!this->s)
 		this->s = new NetworkSocket(this);

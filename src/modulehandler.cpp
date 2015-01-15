@@ -13,6 +13,9 @@
 #include "flux.h"
 #include "Config.h"
 #include <list>
+#include <cassert>
+extern Flux::string binary_dir;
+std::list<Module*> Modules;
 /**
  * \fn bool ModuleHandler::Attach(Implementation i, Module *mod)
  * \brief Module hook for the FOREACH_MOD macro
@@ -105,23 +108,17 @@ ModErr ModuleHandler::LoadModule(const Flux::string &modname)
 
 	Log() << "\033[0m[\033[1;32m*\033[0m] Loading Module:\t\033[1;32m" << modname << config->LogColor;
 
-	Flux::string mdir = binary_dir + "/runtime/"+ (modname.search(".so")?modname+".XXXXXX":modname+".so.XXXXXX");
-	Flux::string input = Flux::string(binary_dir + "/" + (config->ModuleDir.empty()?modname:config->ModuleDir+"/"+modname) + ".so").replace_all_cs("//","/");
+	Flux::string mdir = binary_dir + "/runtime/" + (modname.search(".so") ? modname : modname + ".so");
+	Flux::string input = Flux::string(binary_dir + "/" + (config->ModuleDir.empty() ? modname : config->ModuleDir + "/" + modname) + ".so").replace_all_cs("//","/");
 
-	TextFile mod(input);
-	Flux::string output = TextFile::TempFile(mdir);
-	Log(LOG_RAWIO) << "Runtime Module location: " << output;
+	File *dest = FileSystem::OpenTemporaryFile(mdir);
+	File *src = FileSystem::OpenFile(input, FS_READ);
 
-	mod.Copy(output);
-	if (mod.GetLastError() != FILE_IO_OK)
-	{
-		Log(LOG_RAWIO) << "Runtime Copy Error: " << mod.DecodeLastError();
-		return MOD_ERR_FILE_IO;
-	}
+	assert(FileSystem::CopyFile(dest, src));
 
 	dlerror();
 
-	void *handle = dlopen(output.c_str(), RTLD_LAZY);
+	void *handle = dlopen(dest->GetPath().c_str(), RTLD_LAZY);
 	const char *err = dlerror();
 
 	if (!handle && err && *err)
@@ -156,9 +153,12 @@ ModErr ModuleHandler::LoadModule(const Flux::string &modname)
 		return MOD_ERR_EXCEPTION;
 	}
 
-	m->filepath = output;
-	m->filename = (modname.search(".so")?modname:modname+".so");
+	m->filepath = dest->GetPath();
+	m->filename = (modname.search(".so") ? modname : modname + ".so");
 	m->handle = reinterpret_cast<void*>(handle); //we'll convert to auto later, for now reinterpret_cast.
+
+	FileSystem::CloseFile(src);
+	FileSystem::CloseFile(dest);
 
 	//FOREACH_MOD(I_OnModuleLoad, OnModuleLoad(m));
 

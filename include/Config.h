@@ -65,6 +65,11 @@ public:
 	Flux::string LogFile;
 	Flux::string LogColor;
 
+	/////////////////////////////////////////////////////////
+	// Module related variables
+	Flux::vector Modules;
+	Flux::string ModuleDir;
+
 	// Call an event.
 	Event<Config*> OnRehash;
 };

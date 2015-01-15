@@ -40,6 +40,8 @@ class File
 	size_t len;
 	// Modes originally set
 	fsMode_t modes;
+	// The full path of the file
+	Flux::string path;
 	// Mark this class as being a friend of the FileSystem class
 	// This allows us to create these file objects via the FileSystem class.
 	friend class FileSystem;
@@ -60,6 +62,8 @@ public:
 	virtual void KFlush();
 	// Get a libc FILE pointer
 	virtual FILE *GetFILE();
+	// Get the file path
+	virtual inline Flux::string GetPath() { return this->path; }
 
 	// String-style write functions
 	template<typename... Args>
@@ -105,8 +109,11 @@ class FileSystem
 {
 public:
 
-	virtual File *OpenFile(const Flux::string &path, fsMode_t mode);
-	virtual void CloseFile(File *f);
+	static File *OpenFile(const Flux::string &path, fsMode_t mode);
+	static File *OpenTemporaryFile(const Flux::string &templatepath);
+	static void CloseFile(File *f);
+
+	static bool CopyFile(File *dest, File *src);
 
 
 	// Static functions used for simple reasons
