@@ -16,7 +16,7 @@ public:
 		callables.push_back(func);
 	}
 
-	bool call(arguments__&&... args)
+	bool call(arguments__... args)
 	{
 		for (auto it : callables)
 		{
@@ -26,7 +26,7 @@ public:
 			// Call the event, if it returns false then stop the loop and
 			// return false (event stop)
 			// otherwise continue until everything has been called.
-			if (it(std::forward<arguments__>(args)...) == false)
+			if (it(args...) == false)
 				return false;
 		}
 		return true;
@@ -83,9 +83,9 @@ public:
 	}
 
 	// Same as call
-	bool operator () (arguments__&&... args)
+	bool operator () (arguments__... args)
 	{
-		return this->call(std::forward<arguments__>(args)...);
+		return this->call(args...);
 	}
 
 	// Same as add

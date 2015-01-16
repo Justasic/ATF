@@ -243,15 +243,15 @@ Channel *Network::FindChannel(const Flux::string &channel)
 
 Network *FindNetwork(const Flux::string &name)
 {
-	auto it = Networks.find(name);
-	if(it != Networks.end())
+	auto it = Network::Networks.find(name);
+	if(it != Network::Networks.end())
 		return it->second;
 	return nullptr;
 }
 
 Network *FindNetworkByHost(const Flux::string &name)
 {
-	for (auto it : Networks)
+	for (auto it : Network::Networks)
 	{
 		Network *n = it.second;
 		if (n->hostname == name)

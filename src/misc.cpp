@@ -110,30 +110,73 @@ Flux::string StripColors(const Flux::string &input)
 
 namespace Flux
 {
-Flux::string Sanitize(const Flux::string &string)
-{
-    static struct special_chars
-    {
-		Flux::string character;
-		Flux::string replace;
-		special_chars(const Flux::string &c, const Flux::string &r) : character(c), replace(r) { }
-    }
-    special[] = {
-		special_chars("  ", " "),
-		special_chars("\n",""),
-		special_chars("\002",""),
-		special_chars("\035",""),
-		special_chars("\037",""),
-		special_chars("\026",""),
-		special_chars("\001",""),
-		special_chars("\r", ""),
-		special_chars("","")
-    };
+	Flux::string Sanitize(const Flux::string &string)
+	{
+		static struct special_chars
+		{
+			Flux::string character;
+			Flux::string replace;
+			special_chars(const Flux::string &c, const Flux::string &r) : character(c), replace(r) { }
+		}
+		special[] = {
+			special_chars("  ", " "),
+			special_chars("\n",""),
+			special_chars("\002",""),
+			special_chars("\035",""),
+			special_chars("\037",""),
+			special_chars("\026",""),
+			special_chars("\001",""),
+			special_chars("\r", ""),
+			special_chars("","")
+		};
 
-    Flux::string ret = string.c_str();
-    ret = StripColors(ret);
-    for(int i = 0; special[i].character.empty() == false; ++i)
-		ret = ret.replace_all_cs(special[i].character, special[i].replace);
-    return ret.c_str();
+		Flux::string ret = string.c_str();
+		ret = StripColors(ret);
+		for(int i = 0; special[i].character.empty() == false; ++i)
+			ret = ret.replace_all_cs(special[i].character, special[i].replace);
+		return ret.c_str();
+	}
 }
+
+bool ci::ci_char_traits::eq(char c1st, char c2nd)
+{
+	return ascii_case_insensitive_map[static_cast<unsigned char>(c1st)] == ascii_case_insensitive_map[static_cast<unsigned char>(c2nd)];
+}
+bool ci::ci_char_traits::ne(char c1st, char c2nd)
+{
+	return ascii_case_insensitive_map[static_cast<unsigned char>(c1st)] != ascii_case_insensitive_map[static_cast<unsigned char>(c2nd)];
+}
+bool ci::ci_char_traits::lt(char c1st, char c2nd)
+{
+	return ascii_case_insensitive_map[static_cast<unsigned char>(c1st)] < ascii_case_insensitive_map[static_cast<unsigned char>(c2nd)];
+}
+int ci::ci_char_traits::compare(const char *str1, const char *str2, size_t n)
+{
+	for (unsigned i = 0; i < n; ++i)
+	{
+		if (ascii_case_insensitive_map[static_cast<unsigned char>(*str1)] > ascii_case_insensitive_map[static_cast<unsigned char>(*str2)])
+			return 1;
+		if (ascii_case_insensitive_map[static_cast<unsigned char>(*str1)] < ascii_case_insensitive_map[static_cast<unsigned char>(*str2)])
+			return -1;
+		if (!*str1 || !*str2)
+			return 0;
+		++str1;
+		++str2;
+	}
+	return 0;
+}
+const char *ci::ci_char_traits::find(const char *s1, int n, char c)
+{
+	while (n-- > 0 && ascii_case_insensitive_map[static_cast<unsigned char>(*s1)] != ascii_case_insensitive_map[static_cast<unsigned char>(c)])
+		++s1;
+	return n >= 0 ? s1 : NULL;
+}
+/** Compare two Flux::strings as ci::strings and find which one is less
+ * @param s1 The first string
+ * @param s2 The second string
+ * @return true if s1 < s2, else false
+ */
+bool ci::less::operator()(const Flux::string &s1, const Flux::string &s2) const
+{
+	return s1.ci_str().compare(s2.ci_str()) < 0;
 }

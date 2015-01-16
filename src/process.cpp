@@ -73,6 +73,7 @@ void ProcessCommand(CommandSource &Source, Flux::vector &params2, const Flux::st
 
 	if (!command.is_pos_number_only())
 	{
+		Source.n->OnCommand(command, params2);
 // 		FOREACH_MOD(I_OnCommand, OnCommand(command, params2));
 	}
 
@@ -84,6 +85,7 @@ void ProcessCommand(CommandSource &Source, Flux::vector &params2, const Flux::st
 		if (!Source.n->IsValidChannel(receiver))
 		{
 			Source.Reply("Unknown command \2%s\2", Flux::Sanitize(params2[0]).c_str());
+			Source.n->OnPrivmsg(u, params2);
 // 			FOREACH_MOD(I_OnPrivmsg, OnPrivmsg(u, params2));
 		}
 		else
@@ -110,6 +112,7 @@ void ProcessCommand(CommandSource &Source, Flux::vector &params2, const Flux::st
 			}
 			else
 			{
+				Source.n->OnChanmsg(u, c, params2);
 // 				FOREACH_MOD(I_OnChanmsg, OnChanmsg(u, c, params2)); //This will one day be a actual function for channel only messages..
 			}
 		}
@@ -159,7 +162,9 @@ void process(Network *n, const Flux::string &buffer)
 //   if (e != EVENT_CONTINUE)
 //     return;
 
-//   SET_SEGV_LOCATION();
+	if (!n->OnPreReceiveMessage(buffer))
+		return;
+
 	Flux::string buf = buffer;
 	buf = buf.replace_all_cs("  ", " ");
 
@@ -250,12 +255,14 @@ void process(Network *n, const Flux::string &buffer)
 
 	if (command == "004" && source.search('.'))
 	{
+		n->OnUserRegister(n);
 // 		FOREACH_MOD(I_OnUserRegister, OnUserRegister(n));
 	}
 
 	if (message[0] == '\1' && message[message.length() -1] == '\1' && !params2[0].equals_cs("\001ACTION"))
 	{
 		//Dont allow the rest of the system to process ctcp's as it will be caught by the command handler.
+		n->OnCTCP(nickname, params2, n);
 // 		FOREACH_MOD(I_OnCTCP, OnCTCP(nickname, params2, n));
 		return;
 	}
@@ -264,18 +271,22 @@ void process(Network *n, const Flux::string &buffer)
 	{
 		if (c)
 		{
+			n->OnChannelAction(u, c, params2);
 // 			FOREACH_MOD(I_OnChannelAction, OnChannelAction(u, c, params2));
 		}
 		else
 		{
+			n->OnAction(u, params2);
 // 			FOREACH_MOD(I_OnAction, OnAction(u, params2));
 		}
 	}
 
 	if (command.equals_cs("NICK") && u)
 	{
+		n->OnPreNickChange(u, params[0]);
 // 		FOREACH_MOD(I_OnPreNickChange, OnPreNickChange(u, params[0]));
 		u->SetNewNick(params[0]);
+		n->OnNickChange(u);
 // 		FOREACH_MOD(I_OnNickChange, OnNickChange(u));
 	}
 
@@ -287,6 +298,7 @@ void process(Network *n, const Flux::string &buffer)
 
 	if (command.equals_ci("QUIT"))
 	{
+		n->OnQuit(u, params[0]);
 // 		FOREACH_MOD(I_OnQuit, OnQuit(u, params[0]));
 		delete u;
 		//     QuitUser(n, u);
@@ -294,6 +306,7 @@ void process(Network *n, const Flux::string &buffer)
 
 	if (command.equals_ci("PART"))
 	{
+		n->OnPart(u, c, params[0]);
 // 		FOREACH_MOD(I_OnPart, OnPart(u, c, params[0]));
 		if (n->IsValidChannel(receiver) && c && u /*&& u == n->b*/)
 			delete c; //This should remove the channel from all users if the bot is parting..
@@ -315,9 +328,20 @@ void process(Network *n, const Flux::string &buffer)
 
 	if (command.is_pos_number_only())
 	{
+		n->OnNumeric((int)command, n, params);
 // 		FOREACH_MOD(I_OnNumeric, OnNumeric((int)command, n, params));
 	}
 
+	if (command.equals_ci("PING"))
+		n->OnPing(params, n);
+	else if (command.equals_ci("PONG"))
+		n->OnPong(params, n);
+	else if (command.equals_ci("KICK"))
+		n->OnKick(u, n->FindUser(params[1]), n->FindChannel(params[0]), params[2]);
+	else if (command.equals_ci("ERROR"))
+		n->OnConnectionError(buffer);
+	else if (command.equals_ci("INVITE"))
+		n->OnInvite(u, params[1]);
 // 	EVENT_HOOK(command, "PING", I_OnPing, OnPing(params, n));
 // 	EVENT_HOOK(command, "PONG", I_OnPong, OnPong(params, n));
 // 	EVENT_HOOK(command, "KICK", I_OnKick, OnKick(u, n->FindUser(params[1]), n->FindChannel(params[0]), params[2]));
@@ -328,10 +352,12 @@ void process(Network *n, const Flux::string &buffer)
 	{
 		if (!n->IsValidChannel(receiver))
 		{
+			n->OnNotice(u, params2);
 // 			FOREACH_MOD(I_OnNotice, OnNotice(u, params2));
 		}
 		else
 		{
+			n->OnChannelNotice(u, c, params2);
 // 			FOREACH_MOD(I_OnNotice, OnChannelNotice(u, c, params2));
 		}
 	}
@@ -340,11 +366,13 @@ void process(Network *n, const Flux::string &buffer)
 	{
 		if (n->IsValidChannel(params[0]) && params.size() == 2)
 		{
+			n->OnChannelMode(u, c, params2);
 // 			FOREACH_MOD(I_OnChannelMode, OnChannelMode(u, c, params[1]));
 		}
 
 		else if (n->IsValidChannel(params[0]) && params.size() == 3)
 		{
+			n->OnChannelOp(u, c, params[1], params[2]);
 // 			FOREACH_MOD(I_OnChannelOp, OnChannelOp(u, c, params[1], params[2]));
 		}
 

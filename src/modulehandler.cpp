@@ -15,28 +15,7 @@
 #include <list>
 #include <cassert>
 extern Flux::string binary_dir;
-std::list<Module*> Modules;
-/**
- * \fn bool ModuleHandler::Attach(Implementation i, Module *mod)
- * \brief Module hook for the FOREACH_MOD macro
- * \param Implementation The Implementation of the call list you want your Module to have
- * \param Module the Module the Implementation is on
- */
-bool ModuleHandler::Attach(Implementation i, Module *mod)
-{
-	if(std::find(EventHandlers[i].begin(), EventHandlers[i].end(), mod) != EventHandlers[i].end())
-		return false;
-
-	EventHandlers[i].push_back(mod);
-		return true;
-}
-
-/// \overload bool ModuleHandler::Attach(Implementation *i, Module *mod, size_t sz)
-void ModuleHandler::Attach(Implementation *i, Module *mod, size_t sz)
-{
-	for(size_t n = 0; n < sz; ++n)
-	Attach(i[n], mod);
-}
+extern std::list<Module*> Modules;
 
 Flux::string DecodeModErr(ModErr err)
 {
@@ -75,27 +54,6 @@ template<class TYPE> TYPE class_cast(void *symbol)
 	} cast;
 	cast.symbol = symbol;
 	return cast.function;
-}
-
-/**
- * \fn bool ModuleHandler::Detach(Implementation i, Module *mod)
- * \brief Unhook for the Module hook ModuleHandler::Attach()
- * \param Implementation The Implementation of the call list you want your Module to detach
- * \param Module the Module the Implementation is on
- */
-bool ModuleHandler::Detach(Implementation i, Module *mod)
-{
-	auto x = std::find(EventHandlers[i].begin(), EventHandlers[i].end(), mod);
-	if(x == EventHandlers[i].end())
-	return false;
-	EventHandlers[i].erase(x);
-	return true;
-}
-
-void ModuleHandler::DetachAll(Module *m)
-{
-	for(size_t n = I_BEGIN+1; n != I_END; ++n)
-		Detach(static_cast<Implementation>(n), m);
 }
 
 ModErr ModuleHandler::LoadModule(const Flux::string &modname)
@@ -264,13 +222,13 @@ void LoadModules()
 {
     for(unsigned i = 0; i < config->Modules.size(); ++i)
     {
-	ModErr e = ModuleHandler::LoadModule(config->Modules[i]);
-	//SocketEngine::Process(true);
-	if(e != MOD_ERR_OK)
-	{
-	    Log() << "\n\033[0m[\033[1;31m*\033[0m] " << config->Modules[i] << ": " << DecodeModErr(e) << config->LogColor << "\n";
-	    throw CoreException("Module Load Error");
-	}
+		ModErr e = ModuleHandler::LoadModule(config->Modules[i]);
+		//SocketEngine::Process(true);
+		if(e != MOD_ERR_OK)
+		{
+			Log() << "\n\033[0m[\033[1;31m*\033[0m] " << config->Modules[i] << ": " << DecodeModErr(e) << config->LogColor << "\n";
+			throw CoreException("Module Load Error");
+		}
     }
     TimerManager::TickTimers(time(NULL));
 }

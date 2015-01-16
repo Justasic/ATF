@@ -26,6 +26,7 @@ ThreadHandler *threads;
 MySQL *ms;
 Config *config;
 Event<Request, Flux::string> OnRequest;
+bool protocoldebug = 1;
 
 
 void OpenListener(int sock_fd)

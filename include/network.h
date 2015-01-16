@@ -13,6 +13,7 @@
 #include "timers.h"
 #include "flux.h"
 #include "channel.h"
+#include "EventDispatcher.h"
 
 // class Bot;
 class NetworkSocket;
@@ -135,6 +136,37 @@ public:
 	}
 	// Connect to the network
 	bool Connect();
+
+
+
+
+	/////////////////////////////////////////////////////////////////////////////
+	// Network Events                                                          //
+	/////////////////////////////////////////////////////////////////////////////
+	Event<const Flux::string&, const Flux::vector&>                  OnCommand;
+	Event<User*, const Flux::vector&>                                OnPrivmsg;
+	Event<User*, Channel*, const Flux::vector&>                      OnChanmsg;
+	Event<const Flux::string&>                                       OnPreReceiveMessage;
+	Event<const Flux::string&, const Flux::vector&, Network*>        OnCTCP;
+	Event<User*, Channel*, const Flux::vector&>                      OnChannelAction;
+	Event<User*, const Flux::vector&>                                OnAction;
+	Event<User*, const Flux::string&>                                OnPreNickChange;
+	Event<User*>                                                     OnNickChange;
+	Event<User*, const Flux::string&>                                OnQuit;
+	Event<User*, Channel*, const Flux::string&>                      OnPart;
+	Event<const Flux::vector&, Network*>                             OnPing;
+	Event<const Flux::vector&, Network*>                             OnPong;
+	Event<User*, User*, Channel*, const Flux::string&>               OnKick;
+	Event<const Flux::string&>                                       OnConnectionError;
+	Event<User*, const Flux::string&>                                OnInvite;
+	Event<User*, const Flux::vector&>                                OnNotice;
+	Event<User*, Channel*, const Flux::vector&>                      OnChannelNotice;
+	Event<User*, Channel*, const Flux::string&>                      OnChannelMode;
+	Event<User*, Channel*, const Flux::string&, const Flux::string&> OnChannelOp;
+	Event<User*, const Flux::string&, const Flux::string&>           OnUserMode;
+	Event<User*, Channel*>                                           OnJoin;
+	Event<Network*>                                                  OnUserRegister;
+	Event<int, Network*, const Flux::vector&>                        OnNumeric;
 };
 
 class ReconnectTimer : public Timer

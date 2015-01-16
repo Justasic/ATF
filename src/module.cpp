@@ -34,7 +34,7 @@ Module::Module(const Flux::string &n, ModType m): author(""), version(""), loadt
 Module::~Module()
 {
     Log(LOG_DEBUG) << "Unloading Module " << this->name;
-    ModuleHandler::DetachAll(this);
+//     ModuleHandler::DetachAll(this);
 
     auto it = std::find(Modules.begin(), Modules.end(), this);
     if(it != Modules.end())

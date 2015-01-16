@@ -9,8 +9,7 @@
  * Based on the original code of Anope by The Anope Team.
  */
 #pragma once
-#ifndef FLUX_H
-#define FLUX_H
+#include <string>
 #include <cstring>
 #include <vector>
 #include <set>
@@ -711,4 +710,3 @@ namespace Flux {
 	inline const string operator+(const ci::string &_str, const string &str) { string tmp(_str); tmp += str; return tmp; }
 
 }//end of namespace
-#endif
