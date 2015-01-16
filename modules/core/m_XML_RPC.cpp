@@ -45,7 +45,7 @@ Flux::string SanitizeXML(const Flux::string &str)
 }
 
 // Simple web page in case a web browser decides to go to the link
-static const Flux::string systemver(VERSION_FULL);
+static const Flux::string systemver = VERSION_FULL;
 static const Flux::string HTTPREQUEST =
 "<center><h1>ANT Commit system version "+systemver+"</h1></center>\n"
 "<center><h4>This is the address for XML-RPC commits</h4>\n"
@@ -53,14 +53,6 @@ static const Flux::string HTTPREQUEST =
 "<a href=\"irc://irc.Azuru.net/Computers\"><FONT COLOR=\"red\">irc.Azuru.net</FONT>:<FONT COlOR=\"Blue\">6667</FONT></a></br>\n"
 "Channel: <FONT COLOR=\"Green\">#Commits</FONT></br>\n"
 "Channel: <FONT COLOR=\"Green\">#Computers</FONT></br></center>\n";
-
-class xmlrpcmod;
-static Module *me;
-
-
-/*****************************************************************/
-/*********************** Client Socket ***************************/
-/*****************************************************************/
 
 class XMLRPC : public Page
 {
@@ -71,22 +63,34 @@ public:
 
 	bool Run(Request &r, const Flux::string &url)
 	{
-		std::vector<char> buffer;
-
-		uint8_t *buf = new uint8_t[1024];
-		size_t len = r.ReadData(buf, 1024);
-
-		while (len == 1024)
+		if (r.GetType() == "POST")
 		{
-			len = r.ReadData(buf, 1024);
-			buffer.insert(buffer.end(), buf, buf + len);
+			std::vector<char> buffer;
+
+			uint8_t *buf = new uint8_t[1024];
+			size_t len = r.ReadData(buf, 1024);
+
+			while (len == 1024)
+			{
+				len = r.ReadData(buf, 1024);
+				buffer.insert(buffer.end(), buf, buf + len);
+			}
+
+			delete [] buf;
+
+			buffer.push_back(0);
+
+			return HandleMessage(Flux::string(buffer.begin(), buffer.end()));
 		}
-
-		delete [] buf;
-
-		buffer.push_back(0);
-
-		return HandleMessage(Flux::string(buffer.begin(), buffer.end()));
+		else if (r.GetType() == "GET")
+		{
+			r.Write("Content-Type: text/html\r\n");
+			r.Write("Content-Length: %zu\r\n\r\n", HTTPREQUEST.size());
+			r.Write(HTTPREQUEST);
+			return true;
+		}
+		else
+			return false;
 	}
 
 	bool HandleMessage(const Flux::string&);
@@ -237,7 +241,6 @@ public:
     {
 		this->SetAuthor("Justasic");
 		this->SetVersion(VERSION);
-		me = this;
 	}
 
 	~xmlrpcmod()

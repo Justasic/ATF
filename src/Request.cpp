@@ -41,3 +41,8 @@ void Request::SetStatus(int st)
 {
 	FCGX_SetExitStatus(st, this->request->out);
 }
+
+Flux::string Request::GetType()
+{
+	return this->GetParam("REQUEST_METHOD");
+}

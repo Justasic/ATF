@@ -52,6 +52,7 @@ public:
 	}
 
 	Flux::string GetParam(const Flux::string &str);
+	Flux::string GetType();
 
 	void SetStatus(int st);
 };
