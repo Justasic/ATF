@@ -201,7 +201,7 @@ void ModuleHandler::SanitizeRuntime()
  * \brief Find a Module in the Module list
  * \param name A string containing the Module name you're looking for
  */
-Module *FindModule(const Flux::string &name)
+Module *ModuleHandler::FindModule(const Flux::string &name)
 {
     for(auto it : Modules)
     {

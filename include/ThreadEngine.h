@@ -66,6 +66,7 @@ protected:
 	void JoinThreads();
 	void WakeThreads();
 	std::list<WorkerThread*> Threads;
+	unsigned int spawnthrds;
 public:
 	ThreadHandler();
 	~ThreadHandler();
@@ -104,6 +105,7 @@ public:
 
 	void Initialize();
 	void Shutdown();
+	void SpawnMore(int num);
 
 	static int GetThreadID();
 };

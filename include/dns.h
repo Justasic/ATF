@@ -13,7 +13,7 @@
 
 #include "Socket.h"
 #include "timers.h"
-#include "modules.h"
+#include "module.h"
 
 /** Valid query types
  */

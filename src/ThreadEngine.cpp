@@ -61,7 +61,7 @@ void ThreadHandler::Initialize()
 
 	// We require at least 1 thread, if somehow C++ fails to epic porportions
 	// we won't fail to run the game.
-	unsigned int spawnthrds = 1;
+	spawnthrds = 1;
 
 	// Some older single-core CPUs will have trouble running the game
 	// and rather than just crashing for the user or telling them
@@ -100,6 +100,13 @@ void ThreadHandler::Shutdown()
 
 	for (auto it = this->Threads.begin(), it_end = this->Threads.end(); it != it_end;)
 		delete *(it++);
+}
+
+void ThreadHandler::SpawnMore(int num)
+{
+	for (int i = 0; i < num; ++i)
+		new WorkerThread(++this->spawnthrds, this);
+	dprintf("Spawned %d more threads, total of %zu running\n", num, this->spawnthrds);
 }
 
 void ThreadHandler::JoinThreads()

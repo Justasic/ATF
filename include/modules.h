@@ -11,9 +11,25 @@
 #pragma once
 #include "module.h"
 #include "network.h" //We'll solve includes later
+#include "flux.h"
+#include "tinyformat.h"
+#include "log.h"
+#include "Request.h"
+#include "timers.h"
+#include "user.h"
+#include "ThreadEngine.h"
+#include "SocketException.h"
+#include "dns.h"
+#include "Config.h"
+#include "misc.h"
+#include "page.h"
 //#include "bot.h"
 
 extern Flux::insensitive_map<Network*> Networks;
+
+#define MODULE_HOOK(x) \
+extern "C" Module *ModInit(const Flux::string &name) { return new x(name); } \
+extern "C" void ModunInit(x *m) { delete m; }
 
 
 // extern void startup(int argc, char** argv, char *envp[]);

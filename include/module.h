@@ -12,7 +12,7 @@
 #ifndef Module_H
 #define Module_H
 
-#include "Socket.h"
+// #include "Socket.h"
 #include "user.h"
 #include "command.h"
 #include "network.h"
@@ -48,7 +48,7 @@ enum ModErr
 	MOD_ERR_EXCEPTION
 };
 
-extern Module *FindModule(const Flux::string &name);
+
 
 class Module
 {
@@ -130,10 +130,7 @@ public:
 	static void UnloadAll();
 	static bool Unload(Module*);
 
-// 	static bool Attach(Implementation i, Module *mod);
-// 	static void Attach(Implementation *i, Module *mod, size_t sz);
-// 	static bool Detach(Implementation i, Module *mod);
-// 	static void DetachAll(Module*);
+	static Module *FindModule(const Flux::string &name);
 
 	//////////////////////////////////////////////////////////////////////
 	// Module-specific events which modules may register for

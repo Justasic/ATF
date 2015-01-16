@@ -42,6 +42,15 @@ public:
 		FCGX_PutStr(reinterpret_cast<const char *>(data), len, this->request->out);
 	}
 
+	template<typename ptr>
+	size_t ReadData(ptr *data, size_t maxlen)
+	{
+		if (!data || !maxlen)
+			return -1;
+
+		return FCGX_GetStr(reinterpret_cast<char*>(data), maxlen, this->request->in);
+	}
+
 	Flux::string GetParam(const Flux::string &str);
 
 	void SetStatus(int st);

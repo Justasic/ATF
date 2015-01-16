@@ -24,7 +24,7 @@ std::list<Module*> Modules;
 
 Module::Module(const Flux::string &n, ModType m): author(""), version(""), loadtime(time(NULL)), permanent(false), handle(nullptr), name(n), filename(""), filepath("")
 {
-    if (FindModule(this->name))
+    if (ModuleHandler::FindModule(this->name))
 		throw ModuleException("Module already exists!");
 
     Modules.push_back(this);

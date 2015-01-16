@@ -37,7 +37,7 @@ endmacro(extract_include_filename)
 ###############################################################################
 macro(find_includes SRC INCLUDES)
   # Read all lines from the file that start with #, regardless of whitespace before the #
-  read_from_file(${SRC} "^[ \t]*#.*$" LINES)
+  file(READ ${SRC} "^[ \t]*#.*$" LINES)
   # Set that any #include lines found are valid, and create temporary variables for the last found #ifdef/#ifndef
   set(VALID_LINE TRUE)
   set(LAST_DEF)
@@ -192,7 +192,7 @@ macro(calculate_libraries SRC SKIP SRC_LDFLAGS EXTRA_DEPENDS)
   # Default to not skipping this file
   set(${SKIP} FALSE)
   # Check to see if there are any lines matching: /* RequiredLibraries: [something] */
-  read_from_file(${SRC} "/\\\\*[ \t]*RequiredLibraries:[ \t]*.*[ \t]*\\\\*/" REQUIRED_LIBRARIES)
+  file(READ ${SRC} "/\\\\*[ \t]*RequiredLibraries:[ \t]*.*[ \t]*\\\\*/" REQUIRED_LIBRARIES)
   # Iterate through those lines
   foreach(REQUIRED_LIBRARY ${REQUIRED_LIBRARIES})
     # Strip off the /* RequiredLibraries: and */ from the line
@@ -262,7 +262,7 @@ macro(check_functions SRC SUCCESS)
   # Default to true
   set(${SUCCESS} TRUE)
   # Check to see if there are any lines matching: /* RequiredFunctions: [something] */
-  read_from_file(${SRC} "/\\\\*[ \t]*RequiredFunctions:[ \t]*.*[ \t]*\\\\*/" REQUIRED_FUNCTIONS)
+  file(READ ${SRC} "/\\\\*[ \t]*RequiredFunctions:[ \t]*.*[ \t]*\\\\*/" REQUIRED_FUNCTIONS)
   # Iterate through those lines
   foreach(REQUIRED_FUNCTION ${REQUIRED_FUNCTIONS})
     # Strip off the /* RequiredFunctions: and */ from the line
