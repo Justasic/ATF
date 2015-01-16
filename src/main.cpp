@@ -163,6 +163,8 @@ int main(int argc, char **argv)
 
 	printf("Submitting jobs...\n");
 	th.Submit();
+	// Spawn more threads to compensate for the ones which were consumed.
+	th.SpawnMore((th.totalConcurrentThreads * 2) / 2);
 
 
 	printf("Idling main thread.\n");

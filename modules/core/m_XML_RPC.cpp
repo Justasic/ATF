@@ -54,24 +54,9 @@ static const Flux::string HTTPREQUEST =
 "Channel: <FONT COLOR=\"Green\">#Commits</FONT></br>\n"
 "Channel: <FONT COLOR=\"Green\">#Computers</FONT></br></center>\n";
 
-class xmlrpcclient;
-class xmlrpclistensocket;
-class DNSResolver;
 class xmlrpcmod;
 static Module *me;
 
-class DNSResolver : public DNSRequest
-{
-	Flux::string ip;
-public:
-	DNSResolver(const Flux::string &addr) : DNSRequest(addr, DNS_QUERY_PTR, true, me), ip(addr) { }
-
-	void OnLookupComplete(const DNSQuery *record)
-	{
-		// 	const ResourceRecord &ans_record = record->answers[0];
-		Log(LOG_RAWIO) << "[XML-RPC] User connecting from " << record->answers[0].rdata << " (" << ip << ")";
-	}
-};
 
 /*****************************************************************/
 /*********************** Client Socket ***************************/
@@ -253,11 +238,11 @@ public:
 		this->SetAuthor("Justasic");
 		this->SetVersion(VERSION);
 		me = this;
-    }
+	}
 
-    ~xmlrpcmod()
-    {
-    }
+	~xmlrpcmod()
+	{
+	}
 };
 
 MODULE_HOOK(xmlrpcmod)
