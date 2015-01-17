@@ -51,22 +51,12 @@ User *Channel::FindUser(const Flux::string &usr)
 	if(it.first == this)
 	{
 		for(auto it2 : it.second)
-			if(it2->nick.equals_ci(usr))
+			if(it2->nickname.equals_ci(usr))
 				return it2;
 	}
 	else
 		throw CoreException("Channel "+this->name+" is not in UChanMap? major WTF!");
 	return nullptr;
-}
-
-void Channel::SendJoin()
-{
-	if(!this->n)
-		return; // incase we have some weird shit
-
-	this->n->proto.join(this->name);
-	this->SendWho();
-	this->n->s->Write("MODE %s", this->name.c_str());
 }
 
 void Channel::AddUser(User *u)
@@ -90,33 +80,6 @@ void Channel::DelUser(User *u)
     }
 }
 
-void Channel::SendPart(const Flux::string &reason)
-{
-	this->n->proto.part(this->name, reason);
-}
-
-void Channel::SendMessage(const Flux::string &message)
-{
-	this->n->proto.privmsg(this->name, message);
-}
-
-void Channel::SendAction(const Flux::string &message)
-{
-	this->n->proto.action(this->name, message);
-}
-
-void Channel::SendNotice(const Flux::string &message)
-{
-	this->n->proto.notice(this->name, message);
-}
-
-void Channel::SendWho()
-{
-	if(!this->n)
-		return; // incase we have some weird shit
-
-	this->n->proto.who(this->name);
-}
 /****************************************************************/
 // void QuitUser(Network *n, User *u)
 // {

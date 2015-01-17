@@ -179,9 +179,9 @@ Log::~Log()
 	Flux::string message = Flux::Sanitize(this->buffer.str()), raw = this->buffer.str();
 
 	if(this->u && !this->c)
-		message = this->u->nick + " " + message;
+		message = this->u->nickname + " " + message;
 	if(this->u && this->c)
-		message = this->u->nick + " on " + this->u->n->name + " used " + this->c->name + " " + message;
+		message = this->u->nickname + " on " + this->u->n->name + " used " + this->c->name + " " + message;
 
 	switch(type)
 	{

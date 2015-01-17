@@ -16,6 +16,7 @@
 #include "module.h"
 #include "command.h"
 #include "misc.h"
+#include "bots.h"
 /**
  * \fn void ProcessJoin(CommandSource &source, const Flux::string &chan)
  * \brief Processes the /who numeric (352), this should only be used in Process() unless its for something special
@@ -38,18 +39,18 @@ void ProcessJoin(CommandSource &source, const Flux::string &chan)
 	Flux::string hops = params[7].substr(0,1);
 	Flux::string realname = params[7].erase(0,2);
 	/*******************************************************/
-	User *u = source.n->FindUser(Nickname);
+	User *u = source.b->n->FindUser(Nickname);
 	if (!u)
 	{
-		if ((!Host.empty() || !Nickname.empty() || !Ident.empty()) && source.n)
-			u = new User(source.n, Nickname, Ident, Host, realname, Server);
+		if ((!Host.empty() || !Nickname.empty() || !Ident.empty()) && source.b)
+			u = new User(source.b->n, Nickname, Ident, Host, realname, Server);
 	}
 
-	Channel *c = source.n->FindChannel(channel);
+	Channel *c = source.b->n->FindChannel(channel);
 	if (!c)
 	{
-		if (!channel.empty() && source.n)
-			c = new Channel(source.n, channel);
+		if (!channel.empty() && source.b->n)
+			c = new Channel(source.b->n, channel);
 	}
 
 	if (u)
@@ -73,19 +74,19 @@ void ProcessCommand(CommandSource &Source, Flux::vector &params2, const Flux::st
 
 	if (!command.is_pos_number_only())
 	{
-		Source.n->OnCommand(command, params2);
+		Source.b->OnCommand(command, params2);
 // 		FOREACH_MOD(I_OnCommand, OnCommand(command, params2));
 	}
 
 	if (!FindCommand(params2[0], C_PRIVATE) && command == "PRIVMSG")
 	{
 // 		if (!protocoldebug)
-			Log(LOG_TERMINAL) << '<' << u->nick << '-' << receiver << "> " << Source.params[1];
+			Log(LOG_TERMINAL) << '<' << u->nickname << '-' << receiver << "> " << Source.params[1];
 
-		if (!Source.n->IsValidChannel(receiver))
+		if (!Source.b->n->IsValidChannel(receiver))
 		{
 			Source.Reply("Unknown command \2%s\2", Flux::Sanitize(params2[0]).c_str());
-			Source.n->OnPrivmsg(u, params2);
+			Source.b->OnPrivmsg(u, params2);
 // 			FOREACH_MOD(I_OnPrivmsg, OnPrivmsg(u, params2));
 		}
 		else
@@ -112,7 +113,7 @@ void ProcessCommand(CommandSource &Source, Flux::vector &params2, const Flux::st
 			}
 			else
 			{
-				Source.n->OnChanmsg(u, c, params2);
+				Source.b->OnChanmsg(u, c, params2);
 // 				FOREACH_MOD(I_OnChanmsg, OnChanmsg(u, c, params2)); //This will one day be a actual function for channel only messages..
 			}
 		}
@@ -120,7 +121,7 @@ void ProcessCommand(CommandSource &Source, Flux::vector &params2, const Flux::st
 	else
 	{
 		Command *com = FindCommand(params2[0], C_PRIVATE);
-		if (com && !Source.n->IsValidChannel(receiver) && command == "PRIVMSG")
+		if (com && !Source.b->n->IsValidChannel(receiver) && command == "PRIVMSG")
 		{
 			Source.command = com->name;
 			params2.erase(params2.begin());
@@ -154,7 +155,7 @@ void ProcessCommand(CommandSource &Source, Flux::vector &params2, const Flux::st
  * \brief Main Processing function
  * \param buffer The raw socket buffer
  */
-void process(Network *n, const Flux::string &buffer)
+void process(Bot *b, const Flux::string &buffer)
 {
 
 //   EventResult e;
@@ -162,7 +163,7 @@ void process(Network *n, const Flux::string &buffer)
 //   if (e != EVENT_CONTINUE)
 //     return;
 
-	if (!n->OnPreReceiveMessage(buffer))
+	if (!b->OnPreReceiveMessage(buffer))
 		return;
 
 	Flux::string buf = buffer;
@@ -233,7 +234,7 @@ void process(Network *n, const Flux::string &buffer)
 			Log(LOG_TERMINAL) << "Params " << i << ": " << Flux::Sanitize(params[i]);
 	}
 
-	if (!n)
+	if (!b->n)
 	{
 		Log(LOG_TERMINAL) << "Process() called with no source Network??";
 		return;
@@ -245,9 +246,8 @@ void process(Network *n, const Flux::string &buffer)
 	Flux::string nickname = source.isolate(':', '!');
 	Flux::string uident = source.isolate('!', '@');
 	Flux::string uhost = source.isolate('@', ' ');
-	User *u = n->FindUser(nickname);
-	Channel *c = n->FindChannel(receiver);
-// 	Bot *b = n->b;
+	User *u = b->n->FindUser(nickname);
+	Channel *c = b->n->FindChannel(receiver);
 	Flux::vector params2 = message.explode(" "); //ParamitizeString(message, ' ');
 	//   for(unsigned i = 0; i < params2.size(); ++i)
 	//     Log(LOG_TERMINAL) << "Params2[" << i << "]: " << Flux::Sanitize(params2[i]);
@@ -255,14 +255,14 @@ void process(Network *n, const Flux::string &buffer)
 
 	if (command == "004" && source.search('.'))
 	{
-		n->OnUserRegister(n);
+		b->OnUserRegister(b->n);
 // 		FOREACH_MOD(I_OnUserRegister, OnUserRegister(n));
 	}
 
 	if (message[0] == '\1' && message[message.length() -1] == '\1' && !params2[0].equals_cs("\001ACTION"))
 	{
 		//Dont allow the rest of the system to process ctcp's as it will be caught by the command handler.
-		n->OnCTCP(nickname, params2, n);
+		b->OnCTCP(nickname, params2, b->n);
 // 		FOREACH_MOD(I_OnCTCP, OnCTCP(nickname, params2, n));
 		return;
 	}
@@ -271,34 +271,34 @@ void process(Network *n, const Flux::string &buffer)
 	{
 		if (c)
 		{
-			n->OnChannelAction(u, c, params2);
+			b->OnChannelAction(u, c, params2);
 // 			FOREACH_MOD(I_OnChannelAction, OnChannelAction(u, c, params2));
 		}
 		else
 		{
-			n->OnAction(u, params2);
+			b->OnAction(u, params2);
 // 			FOREACH_MOD(I_OnAction, OnAction(u, params2));
 		}
 	}
 
 	if (command.equals_cs("NICK") && u)
 	{
-		n->OnPreNickChange(u, params[0]);
+		b->OnPreNickChange(u, params[0]);
 // 		FOREACH_MOD(I_OnPreNickChange, OnPreNickChange(u, params[0]));
 		u->SetNewNick(params[0]);
-		n->OnNickChange(u);
+		b->OnNickChange(u);
 // 		FOREACH_MOD(I_OnNickChange, OnNickChange(u));
 	}
 
-	if (!u && !n->FindUser(nickname) && (!nickname.empty() || !uident.empty() || !uhost.empty()))
+	if (!u && !b->n->FindUser(nickname) && (!nickname.empty() || !uident.empty() || !uhost.empty()))
 	{
-		if (!nickname.search('.') && n)
-			u = new User(n, nickname, uident, uhost);
+		if (!nickname.search('.') && b->n)
+			u = new User(b->n, nickname, uident, uhost);
 	}
 
 	if (command.equals_ci("QUIT"))
 	{
-		n->OnQuit(u, params[0]);
+		b->OnQuit(u, params[0]);
 // 		FOREACH_MOD(I_OnQuit, OnQuit(u, params[0]));
 		delete u;
 		//     QuitUser(n, u);
@@ -306,9 +306,9 @@ void process(Network *n, const Flux::string &buffer)
 
 	if (command.equals_ci("PART"))
 	{
-		n->OnPart(u, c, params[0]);
+		b->OnPart(u, c, params[0]);
 // 		FOREACH_MOD(I_OnPart, OnPart(u, c, params[0]));
-		if (n->IsValidChannel(receiver) && c && u /*&& u == n->b*/)
+		if (b->n->IsValidChannel(receiver) && c && u && u == b)
 			delete c; //This should remove the channel from all users if the bot is parting..
 		else
 		{
@@ -320,7 +320,7 @@ void process(Network *n, const Flux::string &buffer)
 
 			if (u && c && !u->FindChannel(c->name))
 			{
-				Log(LOG_TERMINAL) << "Deleted " << u->nick << '|' << c->name << '|' << u->FindChannel(c->name);
+				Log(LOG_TERMINAL) << "Deleted " << u->nickname << '|' << c->name << '|' << u->FindChannel(c->name);
 				delete u;
 			}
 		}
@@ -328,55 +328,55 @@ void process(Network *n, const Flux::string &buffer)
 
 	if (command.is_pos_number_only())
 	{
-		n->OnNumeric((int)command, n, params);
+		b->OnNumeric((int)command, b->n, params);
 // 		FOREACH_MOD(I_OnNumeric, OnNumeric((int)command, n, params));
 	}
 
 	if (command.equals_ci("PING"))
-		n->OnPing(params, n);
+		b->OnPing(params, b->n);
 	else if (command.equals_ci("PONG"))
-		n->OnPong(params, n);
+		b->OnPong(params, b->n);
 	else if (command.equals_ci("KICK"))
-		n->OnKick(u, n->FindUser(params[1]), n->FindChannel(params[0]), params[2]);
+		b->OnKick(u, b->n->FindUser(params[1]), b->n->FindChannel(params[0]), params[2]);
 	else if (command.equals_ci("ERROR"))
-		n->OnConnectionError(buffer);
+		b->OnConnectionError(buffer);
 	else if (command.equals_ci("INVITE"))
-		n->OnInvite(u, params[1]);
+		b->OnInvite(u, params[1]);
 // 	EVENT_HOOK(command, "PING", I_OnPing, OnPing(params, n));
 // 	EVENT_HOOK(command, "PONG", I_OnPong, OnPong(params, n));
-// 	EVENT_HOOK(command, "KICK", I_OnKick, OnKick(u, n->FindUser(params[1]), n->FindChannel(params[0]), params[2]));
+// 	EVENT_HOOK(command, "KICK", I_OnKick, OnKick(u, b->n->FindUser(params[1]), b->n->FindChannel(params[0]), params[2]));
 // 	EVENT_HOOK(command, "ERROR", I_OnConnectionError, OnConnectionError(buffer));
 // 	EVENT_HOOK(command, "INVITE", I_OnInvite, OnInvite(u, params[1]));
 
 	if (command.equals_ci("NOTICE") && !source.find('.'))
 	{
-		if (!n->IsValidChannel(receiver))
+		if (!b->n->IsValidChannel(receiver))
 		{
-			n->OnNotice(u, params2);
+			b->OnNotice(u, params2);
 // 			FOREACH_MOD(I_OnNotice, OnNotice(u, params2));
 		}
 		else
 		{
-			n->OnChannelNotice(u, c, params2);
+			b->OnChannelNotice(u, c, params2);
 // 			FOREACH_MOD(I_OnNotice, OnChannelNotice(u, c, params2));
 		}
 	}
 
 	if (command.equals_ci("MODE"))
 	{
-		if (n->IsValidChannel(params[0]) && params.size() == 2)
+		if (b->n->IsValidChannel(params[0]) && params.size() == 2)
 		{
-			n->OnChannelMode(u, c, params2);
+			b->OnChannelMode(u, c, params2);
 // 			FOREACH_MOD(I_OnChannelMode, OnChannelMode(u, c, params[1]));
 		}
 
-		else if (n->IsValidChannel(params[0]) && params.size() == 3)
+		else if (b->n->IsValidChannel(params[0]) && params.size() == 3)
 		{
-			n->OnChannelOp(u, c, params[1], params[2]);
+			b->OnChannelOp(u, c, params[1], params[2]);
 // 			FOREACH_MOD(I_OnChannelOp, OnChannelOp(u, c, params[1], params[2]));
 		}
 
-// 		else if (params[0] == n->b->nick)
+// 		else if (params[0] == b->n->b->nick)
 // 		{
 // // 			FOREACH_MOD(I_OnUserMode, OnUserMode(u, params[0], params[1]));
 // 		}
@@ -384,15 +384,15 @@ void process(Network *n, const Flux::string &buffer)
 
 	if (command.equals_ci("JOIN"))
 	{
-		if (!u && n && (!nickname.empty() || !uident.empty() || !uhost.empty()))
-			u = new User(n, nickname, uident, uhost);
-		else if (!c && n && n->IsValidChannel(receiver))
-			c = new Channel(n, receiver);
+		if (!u && b->n && (!nickname.empty() || !uident.empty() || !uhost.empty()))
+			u = new User(b->n, nickname, uident, uhost);
+		else if (!c && b->n && b->n->IsValidChannel(receiver))
+			c = new Channel(b->n, receiver);
 		else if (!u->FindChannel(c->name))
 			u->AddChan(c);
-		else if (!c->FindUser(u->nick))
+		else if (!c->FindUser(u->nickname))
 			c->AddUser(u);
-// 		else if (u != n->b)
+// 		else if (u != b->n->b)
 // 		{
 // 			FOREACH_MOD(I_OnJoin, OnJoin(u, c));
 // 		}
@@ -401,7 +401,7 @@ void process(Network *n, const Flux::string &buffer)
 	// Get channel timestamp and modes with the below numerics
 	if (command == "329")
 	{
-		Channel *chan = n->FindChannel(params[1]);
+		Channel *chan = b->n->FindChannel(params[1]);
 		if (chan)
 			chan->creation_time = static_cast<long>(params[2]);
 	}
@@ -409,7 +409,7 @@ void process(Network *n, const Flux::string &buffer)
 	if (command == "324")
 	{
 		// NOTE: This *only* does the modes with + in front of them
-		Channel *chan = n->FindChannel(params[1]);
+		Channel *chan = b->n->FindChannel(params[1]);
 		if (chan)
 			chan->modes = params[2];
 	}
@@ -417,7 +417,7 @@ void process(Network *n, const Flux::string &buffer)
 	// Get the actual topic
 	if (command == "332")
 	{
-		Channel *chan = n->FindChannel(params[1]);
+		Channel *chan = b->n->FindChannel(params[1]);
 		if (chan)
 			chan->topic = params[2];
 	}
@@ -425,7 +425,7 @@ void process(Network *n, const Flux::string &buffer)
 	// Get the topic setter and timestamp
 	if (command == "333")
 	{
-		Channel *chan = n->FindChannel(params[1]);
+		Channel *chan = b->n->FindChannel(params[1]);
 		if (chan)
 		{
 			chan->topic_time = static_cast<long>(params[3]);
@@ -436,9 +436,8 @@ void process(Network *n, const Flux::string &buffer)
 	/**************************************/
 	CommandSource Source;
 	Source.u = u; //User class
-// 	Source.b = b; //Bot class
+	Source.b = b; //Bot class
 	Source.c = c; //Channel class
-	Source.n = n; //Network class
 	Source.params = params;
 	Source.raw = buffer;
 	/**************************************/

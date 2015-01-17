@@ -14,6 +14,7 @@
 #include "flux.h"
 #include "channel.h"
 #include "EventDispatcher.h"
+#include "bots.h"
 
 // class Bot;
 class NetworkSocket;
@@ -62,22 +63,18 @@ struct iSupport
 class Network
 {
 protected:
-	bool disconnecting, issynced;
 	Flux::string usedhostname;
 public:
-	Network(const Flux::string&, const Flux::string&, const Flux::string &n = "");
+	Network(const Flux::string &host, const Flux::string &port, const Flux::string &name = "");
 	~Network();
 	// ReconnectTimer if we have one
 	ReconnectTimer *RTimer;
-	// The socket
-	NetworkSocket *s;
 	// What that network supports
 	iSupport isupport;
 	// When we join a network but aren't synced yet
 	std::deque<Channel*> JoinQueue;
 	// bot pointer for the network
-// 	Bot *b;
-	IRCProto proto;
+	Flux::insensitive_map<Bot*> Bots;
 	// Map of all users in the network
 	Flux::insensitive_map<User*> UserNickList;
 	// Map of all channels in the network
@@ -109,64 +106,14 @@ public:
 		return true;
 	}
 
-	// Sync this network, make sure all channels are joined, etc.
-	void Sync();
-	// Has the channel been synced yet?
-	bool IsSynced() const;
 	// Set the current connected hostname
 	inline void SetConnectedHostname(const Flux::string &str) { this->usedhostname = str; }
 	// Get the current connected hostname
 	inline Flux::string GetConHost() const { return this->usedhostname; }
-	// Check if this network is disconnecting
-	inline bool IsDisconnecting() { return this->disconnecting; }
 	// Find a channel inside the network
 	Channel *FindChannel(const Flux::string&);
 	// Find a user inside the network
 	User *FindUser(const Flux::string &fnick);
-	// Join a channel, if there is no connection, queue the channel for join
-	bool JoinChannel(const Flux::string &chan);
-	// Disconnect from this network
-	bool Disconnect();
-	// Same as above except with a message
-	bool Disconnect(const Flux::string&);
-	template<typename... Args>
-	bool Disconnect(const Flux::string &fmt, const Args&... args)
-	{
-		this->Disconnect(tfm::format(fmt, args...));
-	}
-	// Connect to the network
-	bool Connect();
-
-
-
-
-	/////////////////////////////////////////////////////////////////////////////
-	// Network Events                                                          //
-	/////////////////////////////////////////////////////////////////////////////
-	Event<const Flux::string&, const Flux::vector&>                  OnCommand;
-	Event<User*, const Flux::vector&>                                OnPrivmsg;
-	Event<User*, Channel*, const Flux::vector&>                      OnChanmsg;
-	Event<const Flux::string&>                                       OnPreReceiveMessage;
-	Event<const Flux::string&, const Flux::vector&, Network*>        OnCTCP;
-	Event<User*, Channel*, const Flux::vector&>                      OnChannelAction;
-	Event<User*, const Flux::vector&>                                OnAction;
-	Event<User*, const Flux::string&>                                OnPreNickChange;
-	Event<User*>                                                     OnNickChange;
-	Event<User*, const Flux::string&>                                OnQuit;
-	Event<User*, Channel*, const Flux::string&>                      OnPart;
-	Event<const Flux::vector&, Network*>                             OnPing;
-	Event<const Flux::vector&, Network*>                             OnPong;
-	Event<User*, User*, Channel*, const Flux::string&>               OnKick;
-	Event<const Flux::string&>                                       OnConnectionError;
-	Event<User*, const Flux::string&>                                OnInvite;
-	Event<User*, const Flux::vector&>                                OnNotice;
-	Event<User*, Channel*, const Flux::vector&>                      OnChannelNotice;
-	Event<User*, Channel*, const Flux::string&>                      OnChannelMode;
-	Event<User*, Channel*, const Flux::string&, const Flux::string&> OnChannelOp;
-	Event<User*, const Flux::string&, const Flux::string&>           OnUserMode;
-	Event<User*, Channel*>                                           OnJoin;
-	Event<Network*>                                                  OnUserRegister;
-	Event<int, Network*, const Flux::vector&>                        OnNumeric;
 };
 
 class ReconnectTimer : public Timer
@@ -175,17 +122,4 @@ class ReconnectTimer : public Timer
 public:
 	ReconnectTimer(int, Network*);
 	void Tick(time_t);
-};
-
-class NetworkSocket : public ConnectionSocket, public BufferedSocket
-{
-public:
-	NetworkSocket(Network*);
-	~NetworkSocket();
-	Network *net;
-	int pings;
-	bool Read(const Flux::string&);
-	bool ProcessWrite();
-	void OnConnect();
-	void OnError(const Flux::string&);
 };

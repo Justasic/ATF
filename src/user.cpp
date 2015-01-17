@@ -19,7 +19,9 @@ std::map<User*, std::vector<Channel*>> CUserMap;
 // std::map<Channel*, std::vector<User*>> UChanMap;
 uint32_t usercnt = 0, maxusercnt = 0;
 
-User::User(Network *net, const Flux::string &snick, const Flux::string &sident, const Flux::string &shost, const Flux::string &srealname, const Flux::string &sserver) : nick(snick), host(shost), realname(srealname), ident(sident), fullhost(snick+"!"+sident+"@"+shost), server(sserver), n(net)
+User::User(Network *net, const Flux::string &snick, const Flux::string &sident, const Flux::string &shost, const Flux::string &srealname, const Flux::string &sserver) :
+nickname(snick), hostname(shost), realname(srealname), ident(sident),
+fullhost(snick+"!"+sident+"@"+shost), server(sserver), n(net)
 {
 	/* check to see if a empty string was passed into the constructor */
 	if (snick.empty() || sident.empty() || shost.empty())
@@ -31,7 +33,7 @@ User::User(Network *net, const Flux::string &snick, const Flux::string &sident, 
 	this->n->UserNickList[snick] = this;
 	CUserMap[this] = std::vector<Channel*>();
 
-	Log(LOG_RAWIO) << "New user! " << this->nick << '!' << this->ident << '@' << this->host << (this->realname.empty()?"":" :"+this->realname);
+	Log(LOG_RAWIO) << "New user! " << this->nickname << '!' << this->ident << '@' << this->hostname << (this->realname.empty()?"":" :"+this->realname);
 
 	++usercnt;
 	if (usercnt > maxusercnt)
@@ -43,8 +45,8 @@ User::User(Network *net, const Flux::string &snick, const Flux::string &sident, 
 
 User::~User()
 {
-	Log() << "Deleting user " << this->nick << '!' << this->ident << '@' << this->host << (this->realname.empty()?"":" :"+this->realname);
-	this->n->UserNickList.erase(this->nick);
+	Log() << "Deleting user " << this->nickname << '!' << this->ident << '@' << this->hostname << (this->realname.empty()?"":" :"+this->realname);
+	this->n->UserNickList.erase(this->nickname);
 	CUserMap.erase(this);
 
 	for (auto it : UChanMap)
@@ -55,20 +57,15 @@ User::~User()
 	}
 }
 
-void User::SendWho()
-{
-//     this->n->b->ircproto->who(this->nick);
-}
-
 void User::SetNewNick(const Flux::string &newnick)
 {
 	if (newnick.empty())
 		throw CoreException("User::SetNewNick() was called with empty arguement");
 
-	Log(LOG_TERMINAL) << "Setting new nickname: " << this->nick << " -> " << newnick;
-	this->n->UserNickList.erase(this->nick);
-	this->nick = newnick;
-	this->n->UserNickList[this->nick] = this;
+	Log(LOG_TERMINAL) << "Setting new nickname: " << this->nickname << " -> " << newnick;
+	this->n->UserNickList.erase(this->nickname);
+	this->nickname = newnick;
+	this->n->UserNickList[this->nickname] = this;
 }
 
 void User::AddChan(Channel *c)
@@ -109,15 +106,4 @@ Channel *User::FindChannel(const Flux::string &name)
 	}
 
 	return nullptr;
-}
-
-void User::SendMessage(const Flux::string &message)
-{
-	// TODO
-//     this->n->b->ircproto->notice(this->nick, message);
-}
-
-void User::SendPrivmsg(const Flux::string &message)
-{
-//     this->n->b->ircproto->privmsg(this->nick, message);
 }

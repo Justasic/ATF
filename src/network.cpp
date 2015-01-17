@@ -15,13 +15,12 @@
 #include "Config.h"
 
 Flux::insensitive_map<Network*> Network::Networks;
-extern void process(Network *n, const Flux::string &buffer);
 bool quitting = 0;
 
-Network::Network(const Flux::string &host, const Flux::string &p, const Flux::string &n): disconnecting(false),
-issynced(false), RTimer(nullptr), s(nullptr), proto(this), hostname(host), port(p), CurHost(0)
+Network::Network(const Flux::string &host, const Flux::string &p, const Flux::string &n): RTimer(nullptr),
+hostname(host), port(p), CurHost(0)
 {
-	if(host.empty() || p.empty())
+	if (host.empty() || p.empty())
 		throw CoreException("Network class created with incorrect parameters given");
 
 	//If we didn't specify the network name, use the hostname.
@@ -38,49 +37,21 @@ issynced(false), RTimer(nullptr), s(nullptr), proto(this), hostname(host), port(
 Network::~Network()
 {
 	Log(LOG_DEBUG) << "Deleting network " << this->name << " (" << this->hostname << ':' << this->port << ')';
-	this->Disconnect("Network Removed");
-	if(RTimer)
+
+	for (auto it : this->Bots)
+	{
+		it.second->Disconnect("Network Object being destroyed");
+		delete it.second;
+	}
+
+	if (RTimer)
 		delete RTimer;
 	Networks.erase(this->name);
 }
 
-bool Network::JoinChannel(const Flux::string &chan)
-{
-	Log(LOG_DEBUG) << "Scheduling Channel " << chan << " for join.";
-	if(IsValidChannel(chan))
-	{
-		Channel *c = this->FindChannel(chan);
-		if(!c)
-			c = new Channel(this, chan);
-
-		if(!this->s || !this->s->GetStatus(SF_CONNECTED))
-		{
-			for(auto it : this->JoinQueue)
-			{
-				if(it == c)
-				{
-					Log(LOG_WARN) << "Channel " << c->name << " already in queue to join network " << c->n->name << "! ignoring..";
-					return true;
-				}
-				else
-					this->JoinQueue.push_back(c);
-			}
-		}
-		else
-			c->SendJoin();
-
-		return true;
-	}
-	return false;
-}
-
+#if 0
 bool Network::Disconnect()
 {
-	// Check if we have a socket to send on
-	if(!this->s)
-		return false;
-	// We'll let the socket engine delete the socket
-	this->s->SetDead(true);
 	// say this network is disconnecting
 	this->disconnecting = true;
 	// return that we did something
@@ -89,11 +60,12 @@ bool Network::Disconnect()
 
 bool Network::Disconnect(const Flux::string &buf)
 {
-	if(!buf.empty() && this->s)
+	if (!buf.empty() && this->s)
 		this->proto.quit(buf);
 	this->Disconnect();
 	return true;
 }
+
 
 bool Network::IsSynced() const
 {
@@ -102,10 +74,10 @@ bool Network::IsSynced() const
 
 void Network::Sync()
 {
-// 	if(this->isupport.UserModes.search('B'))
-// 		this->proto->SetMode("+B"); //FIXME: get bot mode?
-// 	if(this->isupport.IRCdVersion.search_ci("ircd-seven") && this->isupport.UserModes.search('Q'))
-// 		this->proto->SetMode("+Q"); //for freenode to stop those redirects
+	// 	if (this->isupport.UserModes.search('B'))
+	// 		this->proto->SetMode("+B"); //FIXME: get bot mode?
+	// 	if (this->isupport.IRCdVersion.search_ci("ircd-seven") && this->isupport.UserModes.search('Q'))
+	// 		this->proto->SetMode("+Q"); //for freenode to stop those redirects
 
 	// Join pending channels
 	while(!this->JoinQueue.empty())
@@ -118,117 +90,32 @@ void Network::Sync()
 
 	this->servername = this->isupport.ServerHost;
 	this->issynced = true;
-// 	FOREACH_MOD(I_OnNetworkSync, OnNetworkSync(this));
+	// 	FOREACH_MOD(I_OnNetworkSync, OnNetworkSync(this));
 	Log(LOG_DEBUG) << "Network " << this->name << " is synced!";
 }
 
+#endif
 
-NetworkSocket::NetworkSocket(Network *tnet) : Socket(-1), ConnectionSocket(), BufferedSocket(), net(tnet), pings(0)
-{
-	if(!tnet)
-		throw CoreException("Network socket created with no network? lolwut?");
 
-	this->net->CurHost++;
-	if(static_cast<unsigned int>(this->net->CurHost) >= this->net->hostnames.size())
-		this->net->CurHost = 1;
 
-	this->net->SetConnectedHostname(this->net->hostnames[this->net->CurHost]);
-
-	Log(LOG_TERMINAL) << "New Network Socket for " << tnet->name << " connecting to "
-	<< tnet->hostname << ':' << tnet->port << '(' << tnet->GetConHost() << ')';
-
-	this->Connect(tnet->GetConHost(), tnet->port);
-}
-
-NetworkSocket::~NetworkSocket()
-{
-	this->Write("QUIT :Socket Closed\n");
-	this->ProcessWrite();
-	this->net->s = nullptr;
-
-	Log() << "Closing Connection to " << net->name;
-
-	if(!this->net->IsDisconnecting())
-	{
-		Log() << "Connection to " << net->name << " [" << net->GetConHost() << ':'
-		<< net->port << "] Failed! Retrying in " << config->RetryWait << " seconds.";
-
-		new ReconnectTimer(config->RetryWait, this->net);
-	}
-}
-
-bool NetworkSocket::Read(const Flux::string &buf)
-{
-	// since BufferedSocket was modified to accommodate stupid HTTP, this code is required.
-	if(buf.empty())
-		return true;
-
-// 	Log(LOG_RAWIO) << '[' << this->net->name << "] " << FixBuffer(buf);
-	Log(LOG_RAWIO) << '[' << this->net->name << "] " << buf;
-	Flux::vector params = buf.explode(" ");
-
-	if(!params.empty() && params[0].search_ci("ERROR"))
-	{
-// 		FOREACH_MOD(I_OnSocketError, OnSocketError(buf));
-		Log(LOG_TERMINAL) << "Socket Error, Closing socket!";
-		return false; //Socket is dead so we'll let the socket engine handle it
-	}
-
-	process(this->net, buf);
-
-	if(!params.empty() && params[0].equals_ci("PING"))
-	{
-		this->Write("PONG :"+params[1]);
-		this->ProcessWrite();
-	}
-	return true;
-}
-
-void NetworkSocket::OnConnect()
-{
-// 	Log(LOG_TERMINAL) << "Successfully connected to " << this->net->name << " ["
-// 	<< this->net->hostname << ':' << this->net->port << "] (" << this->net->GetConHost() << ")";
+// bool Network::Connect()
+// {
+// 	this->disconnecting = false;
+// 	// ###: Does ANT load channels it was in?
+// // 	EventResult e;
+// // 	FOREACH_RESULT(I_OnPreConnect, OnPreConnect(this), e);
+// // 	if (e != EVENT_CONTINUE)
+// // 		return false;
 //
-// 	new Bot(this->net, printfify("%stmp%03d", config->NicknamePrefix.strip('-').c_str(),
-// 								 randint(0, 999)), config->Ident, config->Realname);
-//
-// 	this->net->b->introduce();
-// 	FOREACH_MOD(I_OnPostConnect, OnPostConnect(this, this->net));
-// 	this->ProcessWrite();
-}
-
-void NetworkSocket::OnError(const Flux::string &buf)
-{
-	Log(LOG_TERMINAL) << "Unable to connect to " << this->net->name << " ("
-	<< this->net->hostname << ':' << this->net->port << ')' << (!buf.empty()?(": " + buf):"");
-}
-
-bool NetworkSocket::ProcessWrite()
-{
-// 	Log(LOG_RAWIO) << '[' << this->net->name << ']' << ' ' << FixBuffer(this->WriteBuffer);
-	Log(LOG_RAWIO) << '[' << this->net->name << ']' << ' ' << this->WriteBuffer;
-	return ConnectionSocket::ProcessWrite() && BufferedSocket::ProcessWrite();
-}
-
-
-bool Network::Connect()
-{
-	this->disconnecting = false;
-	// ###: Does ANT load channels it was in?
-// 	EventResult e;
-// 	FOREACH_RESULT(I_OnPreConnect, OnPreConnect(this), e);
-// 	if(e != EVENT_CONTINUE)
-// 		return false;
-
-	if(!this->s)
-		this->s = new NetworkSocket(this);
-	return true;
-}
+// 	if (!this->s)
+// 		this->s = new NetworkSocket(this);
+// 	return true;
+// }
 
 User *Network::FindUser(const Flux::string &fnick)
 {
 	auto it = this->UserNickList.find(fnick);
-	if(it != this->UserNickList.end())
+	if (it != this->UserNickList.end())
 		return it->second;
 	return nullptr;
 }
@@ -236,7 +123,7 @@ User *Network::FindUser(const Flux::string &fnick)
 Channel *Network::FindChannel(const Flux::string &channel)
 {
 	auto it = this->ChanMap.find(channel);
-	if(it != this->ChanMap.end())
+	if (it != this->ChanMap.end())
 		return it->second;
 	return NULL;
 }
@@ -244,7 +131,7 @@ Channel *Network::FindChannel(const Flux::string &channel)
 Network *FindNetwork(const Flux::string &name)
 {
 	auto it = Network::Networks.find(name);
-	if(it != Network::Networks.end())
+	if (it != Network::Networks.end())
 		return it->second;
 	return nullptr;
 }
@@ -264,7 +151,7 @@ Network *FindNetworkByHost(const Flux::string &name)
 
 ReconnectTimer::ReconnectTimer(int wait, Network *net) : Timer(wait), n(net)
 {
-	if(!net)
+	if (!net)
 		return; // Just ignore, we might be exiting from a CoreException
 
 		n->RTimer = this;
@@ -275,16 +162,15 @@ void ReconnectTimer::Tick(time_t)
 	Log(LOG_TERMINAL) << "JoinQueue.size() = " << n->JoinQueue.size();
 	try
 	{
-		if(!quitting)
+		if (!quitting)
 		{
 			for(auto it : n->ChanMap)
 				n->JoinQueue.push_back(it.second);
-			n->Connect();
+// 			n->Connect();
 		}
 	}
 	catch (const SocketException &e)
 	{
-		n->s = nullptr; // ###: Does this memleak?
 		Log() << "Connection to " << n->name << " [" << n->GetConHost() << ':'
 		<< n->port << "] Failed! (" << e.GetReason() << ") Retrying in " << config->RetryWait << " seconds.";
 

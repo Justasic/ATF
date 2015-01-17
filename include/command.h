@@ -10,6 +10,7 @@
  */
 #pragma once
 #include "user.h"
+#include "bots.h"
 #include "flux.h"
 #include "tinyformat.h"
 #include <map>
@@ -32,8 +33,7 @@ struct CommandSource
 {
 	User *u;
 	Channel *c; /* Channel name, this will be replaced with channel class */
-	Network *n;
-// 	Bot *b;
+	Bot *b;
 	Flux::string command;
 	Flux::string raw;
 	Flux::vector params;

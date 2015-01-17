@@ -722,6 +722,15 @@ int BufferedSocket::WriteBufferLen() const
 	return this->WriteBuffer.length();
 }
 
+void BufferedSocket::Write(const Flux::string &msg)
+{
+	if (msg.empty())
+		return;
+
+	this->WriteBuffer += msg + "\n";
+	SocketEngine::MarkWritable(this);
+}
+
 
 BinarySocket::DataBlock::DataBlock(const char *b, size_t l)
 {

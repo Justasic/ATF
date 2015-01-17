@@ -14,16 +14,17 @@
 #include <vector>
 
 class Channel;
+class Network;
 
 class User
 {
 	friend class Channel;
 public:
-	User(Network*, const Flux::string&, const Flux::string&, const Flux::string&, const Flux::string &realname = "", const Flux::string &server ="");
+	User(Network*, const Flux::string &nick, const Flux::string &ident, const Flux::string &host, const Flux::string &realname = "", const Flux::string &server = "");
 	virtual ~User();
 
-	Flux::string nick;
-	Flux::string host;
+	Flux::string nickname;
+	Flux::string hostname;
 	Flux::string realname;
 	Flux::string ident;
 	Flux::string fullhost;
@@ -34,13 +35,13 @@ public:
 	void AddChan(Channel*);
 	void DelChan(Channel*);
 	Channel *FindChannel(const Flux::string&);
-	void SendWho();
 	virtual void SetNewNick(const Flux::string&);
-	virtual void SendMessage(const Flux::string&);
-	virtual void SendPrivmsg(const Flux::string&);
 
-	template<typename... Args> void SendMessage(const Flux::string &fmt, const Args&... args) { this->SendMessage(tfm::format(fmt, args...)); }
-	template<typename... Args> void SendPrivmsg(const Flux::string &fmt, const Args&... args) { this->SendPrivmsg(tfm::format(fmt, args...)); }
+	// NOTE: To send a message to a user you must send them via
+	// the bot object. This is simply to keep track of users.
+	// Bots will accept the User object as a message destination.
+	// This will allow the proper bot to reply or message the
+	// user instead of a random bot chosen.
 };
 
 extern std::map<User*, std::vector<Channel*>> CUserMap;

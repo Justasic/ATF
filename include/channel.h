@@ -39,38 +39,6 @@ public:
 	// Add or delete a user from the channel
 	void AddUser(User*);
 	void DelUser(User*);
-	// Join a channel
-	void SendJoin();
-	// Send /who to the whole channel
-	void SendWho();
-	// Part a channel
-	void SendPart(const Flux::string &msg = "");
-	template<typename... Args>
-	void SendPart(const Flux::string &fmt, const Args&... args)
-	{
-		this->SendPart(tfm::format(fmt, args...));
-	}
-	// Send a message
-	void SendMessage(const Flux::string&);
-	template<typename... Args>
-	void SendMessage(const Flux::string &fmt, const Args&... args)
-	{
-		this->SendMessage(tfm::format(fmt, args...));
-	}
-	// Send a /me to the channel
-	void SendAction(const Flux::string&);
-	template<typename... Args>
-	void SendAction(const Flux::string &fmt, const Args&... args)
-	{
-		this->SendAction(tfm::format(fmt, args...));
-	}
-	// Send a /notice to the channel
-	void SendNotice(const Flux::string&);
-	template<typename... Args>
-	void SendNotice(const Flux::string &fmt, const Args&... args)
-	{
-		this->SendNotice(tfm::format(fmt, args...));
-	}
 };
 
 extern std::map<Channel*, std::vector<User*>> UChanMap;

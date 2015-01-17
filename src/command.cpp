@@ -23,8 +23,8 @@ void CommandSource::Reply(const Flux::string &msg)
 	Flux::vector tokens = msg.explode('\n');
 	for (auto it : tokens)
 	{
-		if (this->u)
-			this->u->SendMessage(it);
+		if (this->b)
+			this->b->Message(this->u, it);
 		else
 			Log(LOG_WARN) << "Cannot send \"" << it << "\" to server, unknown user!";
 	}

@@ -54,6 +54,9 @@ public:
 	int BurstRate;
 	int SendQRate;
 	int RetryWait;
+	Flux::string BotPrefix;
+	Flux::string BotIdent;
+	Flux::string BotRealname;
 
 	//////////////////////////////////////////////////////////
 	// DNS resolver related variables

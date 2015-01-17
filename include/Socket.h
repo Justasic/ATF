@@ -348,14 +348,11 @@ public:
 	/** Write to the socket
 	* @param message The message
 	*/
+	void Write(const Flux::string &msg);
 	template<typename... Args>
 	void Write(const Flux::string &fmt, const Args&... args)
 	{
-		if (fmt.empty())
-			return;
-
-		this->WriteBuffer += tfm::format(fmt.c_str(), args...) + "\n";
-		SocketEngine::MarkWritable(this);
+		this->Write(tfm::format(fmt.c_str(), args...));
 	}
 
 	/** Get the length of the read buffer
