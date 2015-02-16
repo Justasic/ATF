@@ -207,15 +207,18 @@ void Network::Initialize()
 				// FIXME: TODO: XXX:
 				Bot *b = new Bot(n, "FIXME: TODO: XXX: What is this param for???");
 				// We need persistent bot IDs before we can join channels due to future permission systems.
-				//auto channels =
+				auto channels = ms->Query(tfm::format("SELECT * from 'SubscribedChans' where network='%s'", ms->Escape(n->name)));
+				for (auto chan : channels)
+				{
+					Channel *c = new Channel(n, chan["name"]);
+					b->Subscribe(c);
+				}
 			}
 		}
-
-
 	}
 	catch (const MySQLException &e)
 	{
-
+		throw;
 	}
 
 }

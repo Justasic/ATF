@@ -9,6 +9,7 @@ class Bot : public User, public ConnectionSocket, public BufferedSocket, public 
 {
 	bool disconnecting, issynced;
 	int botid;
+	std::vector<Channel*> subscribed;
 public:
 	Bot(Network *n, const Flux::string &modes);
 	~Bot();
@@ -18,7 +19,7 @@ public:
 	// Has the channel been synced yet?
 	bool IsSynced() const;
 	// Check all bots in a network
-	static void CheckBots(Network *n);
+	static void CheckBots();
 	// When a user messages a bot it is handled here
 	void OnMessage(User *u, const Flux::string &msg);
 	// Ensure the bot is still connected and has the correct nickname.
@@ -28,6 +29,9 @@ public:
 	// Handle nick changes or set a new nickname.
 	void SetNewNick(const Flux::string&) override;
 
+
+	// Subscribe to a channel to announce commits in.
+	void Subscribe(Channel *c);
 
 	// Things used to control the flow of the bot
 	void Join(Channel *c);

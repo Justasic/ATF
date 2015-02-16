@@ -91,6 +91,7 @@ public:
 	Flux::string servername;
 	int CurHost;
 
+
 	// All the networks within the application
 	static Flux::insensitive_map<Network*> Networks;
 

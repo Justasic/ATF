@@ -2,7 +2,9 @@
 #include "network.h"
 #include "log.h"
 #include "Config.h"
+#include <ctime>
 #include <cassert>
+#include <regex>
 
 static inline Flux::string GenerateBotNick(int botid)
 {
@@ -46,12 +48,23 @@ Bot::~Bot()
 	}
 }
 
-void Bot::CheckBots(Network *n)
+void Bot::Subscribe(Channel *c)
 {
-	assert(n);
-	Log(LOG_DEBUG) << "Checking bots...";
-	for (auto it : n->Bots)
-		it.second->CheckBot();
+	this->subscribed.push_back(c);
+}
+
+void Bot::CheckBots()
+{
+	static time_t checktime = std::time(NULL) + 5;
+	if (checktime >= std::time(NULL))
+	{
+		Log(LOG_DEBUG) << "Checking bots...";
+		for (auto n : Network::Networks)
+			for (auto it : n.second->Bots)
+				it.second->CheckBot();
+
+		checktime = std::time(NULL) + 5;
+	}
 }
 
 void Bot::Join(Channel *c)
@@ -117,6 +130,38 @@ void Bot::SetNewNick(const Flux::string &nick)
 
 void Bot::CheckBot()
 {
+	// Todo: Ensure we're still connected.
+	// Todo: Ensure we have a correct nickname.
+	std::regex nickreg(config->BotPrefix.std_str() + "\\-[0-9]+");
+	if (!std::regex_match(this->nickname.std_str(), nickreg))
+	{
+		// Our nickname is not valid, try and change it.
+		Flux::string nick = tfm::format("%s-%d", config->BotPrefix, this->botid);
+		while (true)
+		{
+			// Try to find a valid nickname that isnt taken already by another bot
+			// this is our first step to name resolution, the second step is in the
+			// IRC nickname taken handler.
+			auto it = this->n->Bots.find(nick);
+			if (it == this->n->Bots.end())
+			{
+				this->SetNewNick(nick);
+				break;
+			}
+			else
+			{
+				this->botid = it->second->botid + 1;
+				nick = tfm::format("%s-%d", config->BotPrefix, this->botid);
+			}
+		}
+	}
+
+	// Todo: Ensure we have joined all subscribed channels
+	for (auto chan : this->subscribed)
+	{
+		if (!this->FindChannel(chan->name))
+			this->Join(chan);
+	}
 
 }
 

@@ -122,6 +122,8 @@ int main(int argc, char **argv)
 		SocketEngine::Process();
 		// Tick all our timer events, call any which need calling.
 		TimerManager::TickTimers(time(NULL));
+		// Check all bots
+		Bot::CheckBots();
 	}
 
 	printf("Shutting down.\n");
