@@ -11,6 +11,7 @@
 
 #include "command.h"
 #include "module.h"
+#include "misc.h"
 // #include "bot.h"
 
 
@@ -86,7 +87,7 @@ Command::Command(Module *m, const Flux::string &sname, CommandType t, size_t min
 				throw ModuleException("Command \""+this->name+"\" MUST have a command type!");
 		}
 
-		if (it.second != true)
+		if (!it.second)
 			throw ModuleException("Command "+this->name+" already loaded!");
 }
 
@@ -167,4 +168,81 @@ void Command::OnSyntaxError(CommandSource &source, const Flux::string &subcomman
 	if (it->second == NULL)
 		; // TODO
 // 		source.Reply("\002/msg %s HELP %s\002 for more information.", source.b->nick.c_str(), source.command.c_str());
+}
+
+void Command::ProcessCommand(CommandSource &Source, Flux::vector &params2, const Flux::string &receiver, const Flux::string &command)
+{
+	User    *u = Source.u;
+	Channel *c = Source.c;
+
+	if (!command.is_pos_number_only())
+		Source.b->OnCommand(command, params2);
+
+	if (!FindCommand(params2[0], C_PRIVATE) && command == "PRIVMSG")
+	{
+// 		if (!protocoldebug)
+		Log(LOG_TERMINAL) << '<' << u->nickname << '-' << receiver << "> " << Source.params[1];
+
+		if (!Source.b->n->IsValidChannel(receiver))
+		{
+			Source.Reply("Unknown command \2%s\2", Flux::Sanitize(params2[0]).c_str());
+			Source.b->OnPrivmsg(u, params2);
+		}
+		else
+		{
+			Command *ccom = FindCommand(params2[0], C_CHANNEL);
+			if (ccom)
+			{
+				Source.command = ccom->name;
+				params2.erase(params2.begin());
+
+				while (ccom->MaxParams > 0 && params2.size() > ccom->MaxParams)
+				{
+					params2[ccom->MaxParams - 1] += " " + params2[ccom->MaxParams];
+					params2.erase(params2.begin() + ccom->MaxParams);
+				}
+
+				if (params2.size() < ccom->MinParams)
+				{
+					ccom->OnSyntaxError(Source, !params2.empty() ? params2[params2.size() - 1] : "");
+					return;
+				}
+
+				ccom->Run(Source, params2);
+			}
+			else
+			{
+				Source.b->OnChanmsg(u, c, params2);
+// 				FOREACH_MOD(I_OnChanmsg, OnChanmsg(u, c, params2)); //This will one day be a actual function for channel only messages..
+			}
+		}
+	}
+	else
+	{
+		Command *com = FindCommand(params2[0], C_PRIVATE);
+		if (com && !Source.b->n->IsValidChannel(receiver) && command == "PRIVMSG")
+		{
+			Source.command = com->name;
+			params2.erase(params2.begin());
+
+			while (com->MaxParams > 0 && params2.size() > com->MaxParams)
+			{
+				params2[com->MaxParams - 1] += " " + params2[com->MaxParams];
+				params2.erase(params2.begin() + com->MaxParams);
+			}
+
+			if (params2.size() < com->MinParams)
+			{
+				com->OnSyntaxError(Source, !params2.empty() ? params2[params2.size() - 1] : "");
+				return;
+			}
+
+			com->Run(Source, params2);
+		}
+		else
+		{
+// 			if (!protocoldebug)
+			Log(LOG_DEBUG) << Flux::Sanitize(Source.raw); //This receives ALL server commands sent to the bot..
+		}
+	}
 }

@@ -75,55 +75,55 @@ void OpenListener(int sock_fd)
 
 int main(int argc, char **argv)
 {
-	std::vector<Flux::string> args(argv, argv+argc);
-	quit = false;
+		std::vector<Flux::string> args(argv, argv+argc);
+		quit = false;
 
-	// Parse our config before anything
-	Config conf("atf.conf");
-	config = &conf;
+		// Parse our config before anything
+		Config conf("atf.conf");
+		config = &conf;
 
-	printf("Config:\n");
-	config->Parse();
+		printf("Config:\n");
+		config->Parse();
 
-	ThreadHandler th;
-	th.Initialize();
-	threads = &th;
+		ThreadHandler th;
+		th.Initialize();
+		threads = &th;
 
-	FCGX_Init();
-	// Formulate the string from the config.
-	std::stringstream val;
-	val << config->bind << ":" << config->port;
-	// Initialize a new FastCGI socket.
-	std::cout << "Opening FastCGI socket: " << val.str() << std::endl;
-	int sock_fd = FCGX_OpenSocket(val.str().c_str(), 1024);
-	printf("Opened socket fd: %d\n", sock_fd);
+		FCGX_Init();
+		// Formulate the string from the config.
+		std::stringstream val;
+		val << config->bind << ":" << config->port;
+		// Initialize a new FastCGI socket.
+		std::cout << "Opening FastCGI socket: " << val.str() << std::endl;
+		int sock_fd = FCGX_OpenSocket(val.str().c_str(), 1024);
+		printf("Opened socket fd: %d\n", sock_fd);
 
-	// Initialize MySQL
-	MySQL m(config->hostname, config->username, config->password, config->database, config->mysqlport);
-	ms = &m;
+		// Initialize MySQL
+		MySQL m(config->hostname, config->username, config->password, config->database, config->mysqlport);
+		ms = &m;
 
-	for (unsigned int i = 0; i < (th.totalConcurrentThreads * 2) / 2; ++i)
-		th.AddQueue(OpenListener, sock_fd);
+		for (unsigned int i = 0; i < (th.totalConcurrentThreads * 2) / 2; ++i)
+			th.AddQueue(OpenListener, sock_fd);
 
-	printf("Submitting jobs...\n");
-	th.Submit();
-	// Spawn more threads to compensate for the ones which were consumed.
-	th.SpawnMore((th.totalConcurrentThreads * 2) / 2);
+		printf("Submitting jobs...\n");
+		th.Submit();
+		// Spawn more threads to compensate for the ones which were consumed.
+		th.SpawnMore((th.totalConcurrentThreads * 2) / 2);
 
 
-	printf("Idling main thread.\n");
-	while(!quit)
-	{
-		// Check database connection first
-		ms->CheckConnection();
-		// Process reads/writes/errors from the sockets
-		SocketEngine::Process();
-		// Tick all our timer events, call any which need calling.
-		TimerManager::TickTimers(time(NULL));
-	}
+		printf("Idling main thread.\n");
+		while(!quit)
+		{
+				// Check database connection first
+				ms->CheckConnection();
+				// Process reads/writes/errors from the sockets
+				SocketEngine::Process();
+				// Tick all our timer events, call any which need calling.
+				TimerManager::TickTimers(time(NULL));
+		}
 
-	printf("Shutting down.\n");
-	th.Shutdown();
+		printf("Shutting down.\n");
+		th.Shutdown();
 
-	return EXIT_SUCCESS;
+		return EXIT_SUCCESS;
 }

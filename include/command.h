@@ -55,28 +55,29 @@ struct CommandSource
  */
 class Command
 {
-	Flux::string desc;
-	Flux::vector syntax;
-	CommandType type;
+		Flux::string desc;
+		Flux::vector syntax;
+		CommandType type;
 public:
-	size_t MaxParams;
-	size_t MinParams;
-	Flux::string name;
-	Module *mod;
-	Command(Module *m, const Flux::string &sname, CommandType t = C_NULL, size_t min_params=0, size_t max_params=0);
-	virtual ~Command();
+		size_t MaxParams;
+		size_t MinParams;
+		Flux::string name;
+		Module *mod;
+		Command(Module *m, const Flux::string &sname, CommandType t = C_NULL, size_t min_params=0, size_t max_params=0);
+		virtual ~Command();
 protected:
-	void SetDesc(const Flux::string&);
-	void SetSyntax(const Flux::string&);
-	void SendSyntax(CommandSource&);
-	void SendSyntax(CommandSource&, const Flux::string&);
+		void SetDesc(const Flux::string&);
+		void SetSyntax(const Flux::string&);
+		void SendSyntax(CommandSource&);
+		void SendSyntax(CommandSource&, const Flux::string&);
 public:
-	const Flux::string &GetDesc() const;
-	const CommandType GetType() const;
-	virtual void Run(CommandSource&, const Flux::vector &params);
-	virtual bool OnHelp(CommandSource&, const Flux::string&);
-	virtual void OnList(User *u);
-	virtual void OnSyntaxError(CommandSource&, const Flux::string&);
+		const Flux::string &GetDesc() const;
+		const CommandType GetType() const;
+		virtual void Run(CommandSource&, const Flux::vector &params);
+		virtual bool OnHelp(CommandSource&, const Flux::string&);
+		virtual void OnList(User *u);
+		virtual void OnSyntaxError(CommandSource&, const Flux::string&);
+		static void ProcessCommand(CommandSource &Source, Flux::vector &params2, const Flux::string &receiver, const Flux::string &command);
 };
 
 typedef std::map<Flux::string, Command*, ci::less> CommandMap;
