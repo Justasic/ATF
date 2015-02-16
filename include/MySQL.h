@@ -23,11 +23,10 @@
 #include "flux.h"
 #include "EventDispatcher.h"
 
-typedef struct MySQL_Result_s
-{
-	int fields;
-	std::map<int, MYSQL_ROW> rows;
-} MySQL_Result;
+//                 field/col    value
+typedef std::map<Flux::string, Flux::string> MySQL_Row;
+// vector of rows
+typedef std::vector<MySQL_Row> MySQL_Result;
 
 class MySQLException : public std::exception
 {

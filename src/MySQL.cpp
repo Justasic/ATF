@@ -33,8 +33,8 @@ MySQL_Result MySQL::Query(const Flux::string &query)
 
 	// If we fail to connect, just return an empty query.
 	if (!this->con)
-		if (!this->CheckConnection())
-			return res;
+	if (!this->CheckConnection())
+		return res;
 
 	// Run the query
 	if (mysql_query(this->con, query.c_str()))
@@ -46,13 +46,22 @@ MySQL_Result MySQL::Query(const Flux::string &query)
 		throw MySQLException(tfm::format("%s (%d)\n", mysql_error(this->con), mysql_errno(this->con)));
 
 	// Get total columns/fields w/e
-	res.fields = mysql_num_fields(result);
+	unsigned fieldslen = mysql_num_fields(result);
+	// Get the field structures from MySQL so we can convert them to a key-value map which is much more useful.
+	MYSQL_FIELD *fields = mysql_fetch_fields(result);
 
 	// Loop through the MySQL objects and create the array for the query result
-	MYSQL_ROW row;
-	int cnt = 0;
-	while ((row = mysql_fetch_row(result)))
-		res.rows[cnt++] = row;
+	for (MYSQL_ROW row = mysql_fetch_row(result); row; row = mysql_fetch_row(result))
+	{
+		// Iterate all fields in this row specifically
+		MySQL_Row cpprow;
+		for (unsigned i = 0; i < fieldslen; ++i)
+		{
+			// Import the row to the map.
+			cpprow[fields[i].name] = row[i];
+		}
+		res.push_back(cpprow);
+	}
 
 	mysql_free_result(result);
 

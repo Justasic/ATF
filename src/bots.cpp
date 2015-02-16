@@ -14,9 +14,6 @@ Socket(-1), ConnectionSocket(), BufferedSocket(), pings(0), botid(1), IRCProto(t
 {
 	n->Bots[this->nickname] = this;
 
-	if (!n)
-		throw CoreException("Network socket created with no network? lolwut?");
-
 	this->n->CurHost++;
 	if (static_cast<unsigned int>(this->n->CurHost) >= this->n->hostnames.size())
 		this->n->CurHost = 1;
@@ -159,15 +156,15 @@ bool Bot::Read(const Flux::string &buf)
 void Bot::OnConnect()
 {
 	this->introduce_client(this->nickname, this->ident, this->realname);
-	// 	Log(LOG_TERMINAL) << "Successfully connected to " << this->n->name << " ["
-	// 	<< this->n->hostname << ':' << this->n->port << "] (" << this->n->GetConHost() << ")";
+	Log(LOG_TERMINAL) << "Successfully connected to " << this->n->name << " ["
+	<< this->n->hostname << ':' << this->n->port << "] (" << this->n->GetConHost() << ")";
 	//
 	// 	new Bot(this->n, printfify("%stmp%03d", config->NicknamePrefix.strip('-').c_str(),
 	// 								 randint(0, 999)), config->Ident, config->Realname);
 	//
 	// 	this->n->b->introduce();
 	// 	FOREACH_MOD(I_OnPostConnect, OnPostConnect(this, this->n));
-	// 	this->ProcessWrite();
+	this->ProcessWrite();
 }
 
 bool Bot::Disconnect()

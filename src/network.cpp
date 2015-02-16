@@ -13,6 +13,7 @@
 #include "dns.h"
 #include "module.h"
 #include "Config.h"
+#include "MySQL.h"
 
 Flux::insensitive_map<Network*> Network::Networks;
 bool quitting = 0;
@@ -178,4 +179,43 @@ void ReconnectTimer::Tick(time_t)
 		return;
 	}
 	n->RTimer = nullptr;
+}
+
+void Network::Initialize()
+{
+	extern MySQL *ms;
+	// Query for what bots need to be started.
+	try
+	{
+		// What we need to start a bot connection.
+		// - Networks to join
+		//   - Name of network
+		//   - Number of bots on network
+		//     - Channels to join
+		//     - Hostname/IP to connect to
+		//     - Port to connect on
+		auto networks = ms->Query("SELECT * from 'Networks'");
+		// Iterate all networks and add them to the system.
+		for (auto network : networks)
+		{
+			Network *n = new Network(network["host"], network["port"], network["name"]);
+
+			// Now iterate all bots and add those to the system, start connection sockets.
+			auto bots = ms->Query(tfm::format("SELECT * from 'Bots' where network='%s'", ms->Escape(n->name)));
+			for (auto bot : bots)
+			{
+				// FIXME: TODO: XXX:
+				Bot *b = new Bot(n, "FIXME: TODO: XXX: What is this param for???");
+				// We need persistent bot IDs before we can join channels due to future permission systems.
+				//auto channels =
+			}
+		}
+
+
+	}
+	catch (const MySQLException &e)
+	{
+
+	}
+
 }

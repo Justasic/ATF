@@ -252,8 +252,7 @@ void process(Bot *b, const Flux::string &buffer)
 		b->OnInvite(u, params[1]);
 	// 	EVENT_HOOK(command, "PING", I_OnPing, OnPing(params, n));
 	// 	EVENT_HOOK(command, "PONG", I_OnPong, OnPong(params, n));
-	// 	EVENT_HOOK(command, "KICK", I_OnKick, OnKick(u, b->n->FindUser(params[1]), b->n->FindChannel(params[0]), params[2]));
-	// 	EVENT_HOOK(command, "ERROR", I_OnConnectionError, OnConnectionError(buffer));
+	// 	EVENT_HOOK(command, "KICK", I_OnKick, OnKick(u, b->n->FindUser(params[1]), b->n->FindChannel(params[0]), params[2]));// 	EVENT_HOOK(command, "ERROR", I_OnConnectionError, OnConnectionError(buffer));
 	// 	EVENT_HOOK(command, "INVITE", I_OnInvite, OnInvite(u, params[1]));
 
 	if (command.equals_ci("NOTICE") && !source.find('.'))

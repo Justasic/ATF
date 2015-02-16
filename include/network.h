@@ -94,6 +94,9 @@ public:
 	// All the networks within the application
 	static Flux::insensitive_map<Network*> Networks;
 
+	// Initialize networks from Database
+	static void Initialize();
+
 	// Check if that network accepts that chan type.
 	inline bool IsValidChannel(const Flux::string &chan)
 	{
