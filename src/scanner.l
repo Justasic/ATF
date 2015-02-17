@@ -41,6 +41,24 @@
 (?i:module)           { return token::MODULE; }
 (?i:server)           { return token::SERVER; }
 (?i:retries)          { return token::RETRIES; }
+(?i:irc)              { return token::IRC; }
+(?i:botprefix)        { return token::BOTPREFIX; }
+(?i:botident)         { return token::BOTIDENT; }
+(?i:botrealname)      { return token::BOTREAL; }
+(?i:SendQEnabled)     { return token::SENDQENABLE; }
+(?i:SendQBurst)       { return token::SENDQBURST; }
+(?i:SendQRate)        { return token::SENDQRATE; }
+(?i:SendQLines)       { return token::SENDQLINES; }
+(?i:reconnect)        { return token::RECONNECT; }
+(?i:timeout)          { return token::TIMEOUT; }
+(?i:nameserver)       { return token::NAMESERVER; }
+(?i:dns)              { return token::DNS; }
+(?i:age)              { return token::AGE; }
+(?i:log)              { return token::LOG; }
+(?i:filename)         { return token::FILENAME; }
+(?i:color)            { return token::COLOR; }
+
+
 
  /* Ignore white space */
 [ \t\n]               { }

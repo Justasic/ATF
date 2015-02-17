@@ -18,7 +18,7 @@ MySQL::MySQL(const Flux::string &host, const Flux::string &user, const Flux::str
 	if (!this->DoConnection())
 		throw MySQLException(tfm::format("%s (%d)", mysql_error(this->con), mysql_errno(this->con)));
 
-	printf("Connected to %s: %lu\n", host.c_str(), mysql_thread_id(this->con));
+	printf("Connected to %s: %lu using database \"%s\"\n", host.c_str(), mysql_thread_id(this->con), db.c_str());
 }
 
 MySQL::~MySQL()
@@ -33,17 +33,17 @@ MySQL_Result MySQL::Query(const Flux::string &query)
 
 	// If we fail to connect, just return an empty query.
 	if (!this->con)
-	if (!this->CheckConnection())
-		return res;
+		if (!this->CheckConnection())
+			return res;
 
 	// Run the query
 	if (mysql_query(this->con, query.c_str()))
-		throw MySQLException(tfm::format("%s (%d)\n", mysql_error(this->con), mysql_errno(this->con)));
+		throw MySQLException(tfm::format("%s (%d)\n", mysql_error(this->con), mysql_errno(this->con)), query);
 
 	// Store the query result
 	MYSQL_RES *result = mysql_store_result(this->con);
 	if (result == NULL)
-		throw MySQLException(tfm::format("%s (%d)\n", mysql_error(this->con), mysql_errno(this->con)));
+		throw MySQLException(tfm::format("%s (%d)\n", mysql_error(this->con), mysql_errno(this->con)), query);
 
 	// Get total columns/fields w/e
 	unsigned fieldslen = mysql_num_fields(result);

@@ -29,12 +29,13 @@ public:
 	// Parse the config (again)
 	int Parse();
 
-	// Are we daemonizing?
+	//////////////////////////////////////////////////////////
+	// General server/daemon-related items
 	bool daemonize;
-
-	// PID file path
+	int SockWait;
 	Flux::string pidfile;
 
+	//////////////////////////////////////////////////////////
 	// MySQL authentication and connection information
 	Flux::string username;
 	Flux::string password;
@@ -42,18 +43,18 @@ public:
 	Flux::string hostname;
 	short int mysqlport;
 
-	// Port and interface to bind to
+	//////////////////////////////////////////////////////////
+	// Web front end related items -- part of server section in config.
 	Flux::string bind;
 	short int port;
 
 	//////////////////////////////////////////////////////////
 	// IRC-socket related variables
-	int SockWait;
 	int SendQLines;
 	bool SendQEnabled;
 	int BurstRate;
 	int SendQRate;
-	int RetryWait;
+	int RetryWait; // How long we wait until we retry connecting again.
 	Flux::string BotPrefix;
 	Flux::string BotIdent;
 	Flux::string BotRealname;

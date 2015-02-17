@@ -62,15 +62,28 @@
 %token PATH
 %token SERVER
 %token RETRIES
+%token IRC
+%token BOTPREFIX
+%token BOTIDENT
+%token BOTREAL
+%token SENDQENABLE
+%token SENDQBURST
+%token SENDQRATE
+%token SENDQLINES
+%token RECONNECT
+%token NAMESERVER
+%token DNS
+%token TIMEOUT
+%token AGE
+%token LOG
+%token FILENAME
+%token COLOR
 
 
 /*%token SERVER
-%token BIND
-%token PORT
 %token DIRECTORY
 %token USER
 %token GROUP
-%token READTIMEOUT
 %token LISTEN
 %token FIXPATH
 %token MODSEARCHPATH*/
@@ -81,59 +94,61 @@
 
 conf: | conf conf_items;
 
-conf_items: server_entry | MySQL_entry | module_entry;
+conf_items: server_entry | MySQL_entry | module_entry | IRC_entry | DNS_entry | LOG_entry;
 
+ /* Various configuration sections. */
 module_entry: MODULE
 {
-/*	conf_module_t *m = nmalloc(sizeof(conf_module_t));
-	m->path = NULL;
-	m->name = NULL;
-	curmod = m;
 
-	if (!config)
-	{
-		config = nmalloc(sizeof(config_t));
-		config->daemonize = -1;
-		config->readtimeout = 5;
-		config->fixpath = 1;
-		vec_init(&config->listenblocks);
-		vec_init(&config->moduleblocks);
-	}
-
-	vec_push(&config->moduleblocks, m);*/
-}
-'{' module_items '}';
+} '{' module_items '}';
 
 MySQL_entry: MYSQL
 {
-	// We already have a Config object, nothing to concern ourselves with.
-}
-'{' MySQL_items '}';
+
+} '{' MySQL_items  '}';
 
 server_entry: SERVER
 {
-/*	config = nmalloc(sizeof(config_t));
-	// Defaults
-	config->daemonize = 1;
-	config->readtimeout = 5;
-	config->fixpath = 1;
-	vec_init(&config->listenblocks);
-	vec_init(&config->moduleblocks);*/
-}
-'{' server_items '}';
 
+} '{' server_items '}';
+
+IRC_entry: IRC
+{
+
+} '{' IRC_items '}';
+
+DNS_entry: DNS
+{
+
+} '{' dns_items '}';
+
+LOG_entry: LOG
+{
+
+} '{' log_items '}';
+
+ /* Section items. */
 server_items: | server_item server_items;
-server_item: server_daemonize | server_pidfile | server_port | server_bind;
+server_item: server_daemonize | server_pidfile | server_port | server_bind | server_timeout;
 
 MySQL_items: | MySQL_item MySQL_items;
 MySQL_item: MySQL_host | MySQL_port | MySQL_username | MySQL_database | MySQL_password | MySQL_retrytimes;
 
+IRC_items: | IRC_item IRC_items;
+IRC_item: IRC_BotPefix | IRC_BotIdent | IRC_BotRealname | IRC_SendQEnable | IRC_SendQRate | IRC_SendQBurst | IRC_Reconnect | IRC_SendQLines;
+
 module_items: | module_item module_items;
 module_item: module_path | module_name;
 
+dns_items: | dns_item dns_items;
+dns_item: dns_timeout | dns_nameserver;
+
+log_items: | log_item log_items;
+log_item: log_age | log_filename | log_color;
 
 
 
+ /* Actually defining sections and such */
 module_path: PATH '=' STR ';'
 {
 /* 	curmod->path = strdup(yylval.sval); */
@@ -186,6 +201,77 @@ MySQL_retrytimes: RETRIES '=' CINT ';'
 
 
 
+
+IRC_BotPefix: BOTPREFIX '=' STR ';'
+{
+	ctx->BotPrefix = yyla.value.sval;
+};
+
+IRC_BotIdent: BOTIDENT '=' STR ';'
+{
+	ctx->BotIdent = yyla.value.sval;
+};
+
+IRC_BotRealname: BOTREAL '=' STR ';'
+{
+	ctx->BotRealname = yyla.value.sval;
+};
+
+IRC_SendQEnable: SENDQENABLE '=' BOOL ';'
+{
+	ctx->SendQEnabled = yyla.value.bval;
+};
+
+IRC_SendQRate: SENDQRATE '=' CINT ';'
+{
+	ctx->SendQRate = yyla.value.ival;
+};
+
+IRC_SendQBurst: SENDQBURST '=' CINT ';'
+{
+	ctx->BurstRate = yyla.value.ival;
+};
+
+IRC_SendQLines: SENDQLINES '=' CINT ';'
+{
+	ctx->SendQLines = yyla.value.ival;
+};
+
+IRC_Reconnect: RECONNECT '=' CINT ';'
+{
+	ctx->RetryWait = yyla.value.ival;
+};
+
+
+
+
+dns_timeout: TIMEOUT '=' CINT ';'
+{
+	ctx->DNSTimeout = yyla.value.ival;
+};
+
+dns_nameserver: NAMESERVER '=' STR ';'
+{
+	ctx->NameServer = yyla.value.sval;
+};
+
+
+
+
+log_age: AGE '=' CINT ';'
+{
+	ctx->LogAge = yyla.value.ival;
+};
+
+log_filename: FILENAME '=' STR ';'
+{
+	ctx->LogFile = yyla.value.sval;
+};
+
+log_color: COLOR '=' STR ';'
+{
+	ctx->LogColor = yyla.value.sval;
+};
 
 
 
@@ -248,13 +334,7 @@ server_bind: BIND '=' STR ';'
 	tfm::printf(" Server bind: %s\n", ctx->bind);
 };
 
-/*server_readtimeout: READTIMEOUT '=' CINT ';'
+server_timeout: TIMEOUT '=' CINT ';'
 {
-	config->readtimeout = yylval.ival;
-};*/
-
-/*server_fixpath: FIXPATH '=' BOOL ';'
-{
-	config->fixpath = yylval.bval;
-};*/
-
+	ctx->SockWait = yyla.value.ival;
+};

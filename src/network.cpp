@@ -194,20 +194,24 @@ void Network::Initialize()
 		//     - Channels to join
 		//     - Hostname/IP to connect to
 		//     - Port to connect on
-		auto networks = ms->Query("SELECT * from 'Networks'");
+
+		// create table Networks (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), host VARCHAR(255), port INT, PRIMARY KEY(id));
+		auto networks = ms->Query("SELECT * FROM Networks");
 		// Iterate all networks and add them to the system.
 		for (auto network : networks)
 		{
 			Network *n = new Network(network["host"], network["port"], network["name"]);
 
 			// Now iterate all bots and add those to the system, start connection sockets.
-			auto bots = ms->Query(tfm::format("SELECT * from 'Bots' where network='%s'", ms->Escape(n->name)));
+			// create table Networks (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), host VARCHAR(255), port INT, PRIMARY KEY(id));
+			auto bots = ms->Query(tfm::format("SELECT * FROM Bots WHERE networkid='%s'", ms->Escape(network["id"])));
 			for (auto bot : bots)
 			{
 				// FIXME: TODO: XXX:
 				Bot *b = new Bot(n, "FIXME: TODO: XXX: What is this param for???");
 				// We need persistent bot IDs before we can join channels due to future permission systems.
-				auto channels = ms->Query(tfm::format("SELECT * from 'SubscribedChans' where network='%s'", ms->Escape(n->name)));
+				// create table Networks (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255), host VARCHAR(255), port INT, PRIMARY KEY(id));
+				auto channels = ms->Query(tfm::format("SELECT * FROM SubscribedChans WHERE networkid='%s'", ms->Escape(network["id"])));
 				for (auto chan : channels)
 				{
 					Channel *c = new Channel(n, chan["name"]);
@@ -218,6 +222,8 @@ void Network::Initialize()
 	}
 	catch (const MySQLException &e)
 	{
+		Log(LOG_CRITICAL) << "MySQL Exception: " << e.what();
+		Log(LOG_CRITICAL) << "\nQuery: \"" << e.Query() << "\"";
 		throw;
 	}
 

@@ -31,11 +31,13 @@ typedef std::vector<MySQL_Row> MySQL_Result;
 class MySQLException : public std::exception
 {
 	const char *str;
+	const char *query;
 public:
-	MySQLException(const Flux::string &mstr)
+	MySQLException(const Flux::string &mstr, const Flux::string &query = "")
 	{
 		// we're crashing, I honestly have bigger issues than memleaks right now.
 		this->str = strdup(mstr.c_str());
+		this->query = strdup(query.c_str());
 	}
 
 	~MySQLException()
@@ -48,6 +50,12 @@ public:
 	{
 		return this->str;
 	}
+
+	const char *Query() const noexcept
+	{
+		return this->query;
+	}
+
 };
 
 class MySQL

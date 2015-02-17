@@ -67,6 +67,11 @@ class CoreException : public std::exception
 	{
 		return source.c_str();
 	}
+
+	const char *what() const noexcept
+	{
+		return this->GetReason();
+	}
 };
 
 class LogException : public CoreException
