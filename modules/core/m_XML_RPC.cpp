@@ -223,7 +223,8 @@ bool XMLRPC::HandleMessage(const Flux::string &content)
 		Log(LOG_TERMINAL) << "*** END COMMIT INFO! ***\n";
 
 		/* Announce to other modules for commit announcement */
-		// 	FOREACH_MOD(I_OnCommit, OnCommit(message));
+		// Call the global commit event.
+		OnCommit(message);
 	}
 	catch (std::exception &ex)
 	{

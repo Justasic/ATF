@@ -28,6 +28,9 @@ struct CommitMessage
     Network *network;
 };
 
+// Global event to signify a commit posting.
+extern Event<CommitMessage&> OnCommit;
+
 struct iSupport
 {
     // Other options the server might send.

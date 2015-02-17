@@ -16,6 +16,7 @@
 #include "MySQL.h"
 
 Flux::insensitive_map<Network*> Network::Networks;
+Event<CommitMessage&> OnCommit;
 bool quitting = 0;
 
 Network::Network(const Flux::string &host, const Flux::string &p, const Flux::string &n): RTimer(nullptr),

@@ -4,7 +4,6 @@
 #include "network.h"
 #include "EventDispatcher.h"
 
-
 class Bot : public User, public ConnectionSocket, public BufferedSocket, public IRCProto
 {
 	bool disconnecting, issynced;
@@ -28,10 +27,14 @@ public:
 	inline bool IsDisconnecting() { return this->disconnecting; }
 	// Handle nick changes or set a new nickname.
 	void SetNewNick(const Flux::string&) override;
+	// Find a bot that is in the channel specified
+	static Bot *FindBotInChannel(Channel *c);
 
 
 	// Subscribe to a channel to announce commits in.
 	void Subscribe(Channel *c);
+	// Check if a bot is subscribed to a channel
+	bool IsSubscribed(Channel *c);
 
 	// Things used to control the flow of the bot
 	void Join(Channel *c);

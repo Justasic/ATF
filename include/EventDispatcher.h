@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <vector>
+#include <typeinfo>
 
 template<class... arguments__>
 class Event
@@ -10,7 +11,7 @@ protected:
 	std::vector<std::function<bool(arguments__...)>> callables;
 public:
 	template<class callable>
-	void add(const callable c)
+	void add(callable c)
 	{
 		std::function<bool(arguments__...)> func = c;
 		callables.push_back(func);
@@ -44,6 +45,20 @@ public:
 		}
 		else
 			return false;
+	}
+
+	template<typename callable>
+	bool remove(callable c)
+	{
+		for (auto begin = this->callables.begin(), end = this->callables.end(); begin != end; ++begin)
+		{
+			if (typeid(c) == (*begin).target_type())
+			{
+				this->callables.erase(begin);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	void reset()
@@ -90,7 +105,7 @@ public:
 
 	// Same as add
 	template<class callable>
-	void operator += (const callable c)
+	void operator += (callable c)
 	{
 		std::function<bool(arguments__...)> func = c;
 		callables.push_back(func);

@@ -237,3 +237,24 @@ bool Bot::ProcessWrite()
 	Log(LOG_RAWIO) << '[' << this->n->name << ']' << ' ' << this->WriteBuffer;
 	return ConnectionSocket::ProcessWrite() && BufferedSocket::ProcessWrite();
 }
+
+bool Bot::IsSubscribed(Channel *c)
+{
+	for (auto it : this->subscribed)
+	{
+		if (it->name == c->name)
+			return true;
+	}
+	return false;
+}
+
+
+Bot *Bot::FindBotInChannel(Channel *c)
+{
+	for (auto bot : c->n->Bots)
+	{
+		if (bot.second->IsSubscribed(c))
+			return bot.second;
+	}
+	return nullptr;
+}
