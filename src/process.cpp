@@ -65,12 +65,6 @@ void ProcessJoin(CommandSource &source, const Flux::string &chan)
  */
 void process(Bot *b, const Flux::string &buffer)
 {
-
-	//   EventResult e;
-	//   FOREACH_RESULT(I_OnPreReceiveMessage, OnPreReceiveMessage(buffer), e);
-	//   if (e != EVENT_CONTINUE)
-	//     return;
-
 	if (!b->OnPreReceiveMessage(buffer))
 		return;
 
@@ -95,8 +89,11 @@ void process(Bot *b, const Flux::string &buffer)
 			return;
 	}
 
-	Flux::string command = buf;
+	// Tokenize the command given to us
 	Flux::vector tokens = buf.explode(" "), params;
+	// Get the command from the tokens then remove it leaving the tokens converted to a parameter structure.
+	Flux::string command = tokens[0];
+	tokens.erase(tokens.begin());
 
 	for (auto it : tokens)
 	{
@@ -107,28 +104,6 @@ void process(Bot *b, const Flux::string &buffer)
 		else
 			params.push_back(it);
 	}
-
-	// 	sepstream bufferseparator(buf, ' ');
-	// 	Flux::string bufferseparator_token;
-	// 	Flux::string command = buf;
-	//
-	// 	if (bufferseparator.GetToken(bufferseparator_token))
-	// 		command = bufferseparator_token;
-	//
-	// 	std::vector<Flux::string> params;
-	// 	while(bufferseparator.GetToken(bufferseparator_token))
-	// 	{
-	// 		if (bufferseparator_token[0] == ':')
-	// 		{
-	// 			if (!bufferseparator.StreamEnd())
-	// 				params.push_back(bufferseparator_token.substr(1)+" "+bufferseparator.GetRemaining());
-	// 			else
-	// 				params.push_back(bufferseparator_token.substr(1));
-	// 			break;
-	// 		}
-	// 		else
-	// 			params.push_back(bufferseparator_token);
-	// 	}
 
 	if (protocoldebug)
 	{

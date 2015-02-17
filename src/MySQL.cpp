@@ -1,6 +1,7 @@
 #include "MySQL.h"
 #include "tinyformat.h"
 #include "misc.h"
+#include "log.h"
 
 
 MySQL::MySQL(const Flux::string &host, const Flux::string &user, const Flux::string &pass, const Flux::string &db, short p = 0) :
@@ -77,7 +78,7 @@ bool MySQL::DoConnection()
 
 bool MySQL::CheckConnection()
 {
-	dprintf("CheckConnection()...\n");
+	Log(LOG_DEBUG) << "MySQL::CheckConnection()...";
 	if (!this->con)
 		goto tryconnect;
 

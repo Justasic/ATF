@@ -23,6 +23,8 @@ User::User(Network *net, const Flux::string &snick, const Flux::string &sident, 
 nickname(snick), hostname(shost), realname(srealname), ident(sident),
 fullhost(snick+"!"+sident+"@"+shost), server(sserver), n(net)
 {
+	Log(LOG_RAWIO) << "new User(" << (void*)net << ", " << snick << ", " << sident << ", " << shost << ", " << srealname << ", " << sserver << ");";
+
 	/* check to see if a empty string was passed into the constructor */
 	if (snick.empty() || sident.empty() || shost.empty())
 		throw CoreException("Bad args sent to User constructor");

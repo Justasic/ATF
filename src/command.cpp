@@ -241,8 +241,8 @@ void Command::ProcessCommand(CommandSource &Source, Flux::vector &params2, const
 		}
 		else
 		{
-// 			if (!protocoldebug)
-			Log(LOG_DEBUG) << Flux::Sanitize(Source.raw); //This receives ALL server commands sent to the bot..
+ 			if (!protocoldebug)
+				Log(LOG_DEBUG) << Flux::Sanitize(Source.raw); //This receives ALL server commands sent to the bot..
 		}
 	}
 }

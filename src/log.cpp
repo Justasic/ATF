@@ -88,10 +88,10 @@ static inline Flux::string CreateLogName(const Flux::string &file, time_t t = ti
  */
 void CheckLogDelete(Log *log)
 {
-	Flux::string dir = binary_dir + "/logs/";
+	Flux::string dir = "logs/";
 	if (!FileSystem::IsDirectory(dir))
 	{
-		Log(LOG_TERMINAL) << "Directory " << dir << " does not exist, making new directory.";
+		//Log(LOG_TERMINAL) << "Directory " << dir << " does not exist, making new directory.";
 		FileSystem::MakeDirectory(dir);
 	}
 

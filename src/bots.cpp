@@ -11,7 +11,7 @@ static inline Flux::string GenerateBotNick(int botid)
 	return tfm::format("%s%d", config->BotPrefix, botid);
 }
 
-Bot::Bot(Network *n, const Flux::string &modes) : User(n, GenerateBotNick(1), config->BotIdent, "", config->BotRealname),
+Bot::Bot(Network *n, const Flux::string &modes) : User(n, GenerateBotNick(1), config->BotIdent, n->hostname, config->BotRealname),
 Socket(-1), ConnectionSocket(), BufferedSocket(), pings(0), botid(1), IRCProto(this)
 {
 	n->Bots[this->nickname] = this;
@@ -55,15 +55,15 @@ void Bot::Subscribe(Channel *c)
 
 void Bot::CheckBots()
 {
-	static time_t checktime = std::time(NULL) + 5;
-	if (checktime >= std::time(NULL))
+	static time_t checktime = std::time(NULL) + 15;
+	if (checktime <= std::time(NULL))
 	{
 		Log(LOG_DEBUG) << "Checking bots...";
 		for (auto n : Network::Networks)
 			for (auto it : n.second->Bots)
 				it.second->CheckBot();
 
-		checktime = std::time(NULL) + 5;
+		checktime = std::time(NULL) + 15;
 	}
 }
 
@@ -109,6 +109,8 @@ void Bot::Notice(User *u, const Flux::string &msg)
 
 void Bot::SetNewNick(const Flux::string &nick)
 {
+	Log(LOG_TERMINAL) << "SET NEW NICK HANDLER CALLED: " << nick;
+
 	if (nick.empty())
 		return;
 
@@ -132,11 +134,11 @@ void Bot::CheckBot()
 {
 	// Todo: Ensure we're still connected.
 	// Todo: Ensure we have a correct nickname.
-	std::regex nickreg(config->BotPrefix.std_str() + "\\-[0-9]+");
+	std::regex nickreg(config->BotPrefix.std_str() + "[0-9]+");
 	if (!std::regex_match(this->nickname.std_str(), nickreg))
 	{
 		// Our nickname is not valid, try and change it.
-		Flux::string nick = tfm::format("%s-%d", config->BotPrefix, this->botid);
+		Flux::string nick = GenerateBotNick(this->botid);
 		while (true)
 		{
 			// Try to find a valid nickname that isnt taken already by another bot
@@ -151,7 +153,7 @@ void Bot::CheckBot()
 			else
 			{
 				this->botid = it->second->botid + 1;
-				nick = tfm::format("%s-%d", config->BotPrefix, this->botid);
+				nick = GenerateBotNick(this->botid);
 			}
 		}
 	}

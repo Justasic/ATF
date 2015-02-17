@@ -678,19 +678,6 @@ bool BufferedSocket::ProcessRead()
 			return false;
 	}
 
-// 	sepstream stream(sbuffer, '\n');
-//
-// 	Flux::string tbuf;
-// 	while (stream.GetToken(tbuf))
-// 	{
-// 		// 	Log(LOG_TERMINAL) << "BUFFER: " << tbuf;
-// 		// Stupid HTTP protocol requires that there be a blank line sent to
-// 		// the read socket, therefore we cannot check if the buffer is empty
-// 		// and force the user to check for their protocol. :<
-// 		tbuf.trim();
-// 		if (/*!tbuf.empty() &&*/ !Read(tbuf))
-// 			return false;
-// 	}
 	return true;
 }
 
