@@ -138,6 +138,7 @@ bool HandleOnCommit(CommitMessage &msg)
 		Bot *b = Bot::FindBotInChannel(c);
 		b->Message(c, formattedmessgae);
 	}
+	return false;
 }
 
 /**************** Module Class *******************/

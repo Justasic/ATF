@@ -215,9 +215,6 @@ void FileSystem::CloseFile(File *f)
 
 bool FileSystem::CopyFile(File *dest, File *src)
 {
-
-	printf("=============Copying %s to %s\n", src->GetPath().c_str(), dest->GetPath().c_str());
-
 	if (!dest || !src)
 		return false;
 

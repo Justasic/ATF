@@ -71,7 +71,7 @@ include (CheckCXXCompilerFlag)
 
 # Make sure the compiler accepts C11
 check_cxx_compiler_flag(-std=c++11 HAVE_C11_FLAG)
-set(CFLAGS "${CFLAGS} -g -Werror=implicit-function-declaration")
+set(CFLAGS "${CFLAGS} -g -Werror=implicit-function-declaration -Wall -Wextra")
 
 if (NOT HAVE_C11_FLAG)
 	#If the compiler doesn't have the -std=c11 flag, try and use the -std=c1x but let the user
