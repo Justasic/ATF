@@ -123,4 +123,6 @@ public:
 	static void MakeDirectory(const Flux::string &str);
 	static Flux::string GetCurrentDirectory();
 	static Flux::vector DirectoryList(const Flux::string &dir);
+	static Flux::string Dirname(const Flux::string &str);
+	static Flux::string Basename(const Flux::string &str);
 };

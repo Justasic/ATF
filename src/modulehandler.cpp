@@ -14,6 +14,8 @@
 #include "Config.h"
 #include <list>
 #include <cassert>
+#include <dlfcn.h>
+#include <regex>
 extern Flux::string binary_dir;
 extern std::list<Module*> Modules;
 
@@ -66,8 +68,11 @@ ModErr ModuleHandler::LoadModule(const Flux::string &modname)
 
 	Log() << "\033[0m[\033[1;32m*\033[0m] Loading Module:\t\033[1;32m" << modname << config->LogColor;
 
-	Flux::string mdir = binary_dir + "/runtime/" + (modname.search(".so") ? modname : modname + ".so");
-	Flux::string input = Flux::string(binary_dir + "/" + (config->ModuleDir.empty() ? modname : config->ModuleDir + "/" + modname) + ".so").replace_all_cs("//","/");
+	Flux::string modbasename = FileSystem::Basename(modname);
+	tfm::printf("modbasename: %s\n", modbasename);
+
+	Flux::string mdir = binary_dir + "/runtime/" + (modbasename.search(".so") ? modbasename : modbasename + ".so");
+	Flux::string input = modname;
 
 	File *dest = FileSystem::OpenTemporaryFile(mdir);
 	File *src = FileSystem::OpenFile(input, FS_READ);
@@ -220,13 +225,21 @@ Module *ModuleHandler::FindModule(const Flux::string &name)
  */
 void LoadModules()
 {
-    for(unsigned i = 0; i < config->Modules.size(); ++i)
+	ModuleHandler::SanitizeRuntime();
+	auto files = FileSystem::DirectoryList(config->ModuleDir);
+
+    for(unsigned i = 0; i < files.size(); ++i)
     {
-		ModErr e = ModuleHandler::LoadModule(config->Modules[i]);
+	    // Make sure we're a shared object and not something dumb.
+	    std::regex IsSharedObject("(.*)\\.so$");
+	    if (!std::regex_match(files[i].std_str(), IsSharedObject))
+		    continue;
+
+		ModErr e = ModuleHandler::LoadModule(files[i]);
 		//SocketEngine::Process(true);
 		if(e != MOD_ERR_OK)
 		{
-			Log() << "\n\033[0m[\033[1;31m*\033[0m] " << config->Modules[i] << ": " << DecodeModErr(e) << config->LogColor << "\n";
+			Log() << "\n\033[0m[\033[1;31m*\033[0m] " << files[i] << ": " << DecodeModErr(e) << config->LogColor << "\n";
 			throw CoreException("Module Load Error");
 		}
     }

@@ -1,3 +1,10 @@
+// Prevents mysql from typedefing something not used and will throw errros
+// this is stupid but it works
+#define HAVE_INT32 1
+#include <mysql/my_global.h>
+#include <mysql/mysql.h>
+// Fixes for mysql-specific defines which we don't use
+#undef VERSION
 #include "MySQL.h"
 #include "tinyformat.h"
 #include "misc.h"

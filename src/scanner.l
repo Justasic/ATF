@@ -57,6 +57,7 @@
 (?i:log)              { return token::LOG; }
 (?i:filename)         { return token::FILENAME; }
 (?i:color)            { return token::COLOR; }
+(?i:moduledirectory)  { return token::MODDIR; }
 
 
 

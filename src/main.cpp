@@ -10,6 +10,8 @@
 #include <cerrno>
 #include <atomic>
 #include <regex>
+#include <libgen.h>
+#include "file.h"
 
 // Our thread engine.
 #include "ThreadEngine.h"
@@ -29,7 +31,21 @@ MySQL *ms;
 Config *config;
 Event<Request, Flux::string> OnRequest;
 bool protocoldebug = 1;
+extern Flux::string binary_dir;
 
+static inline Flux::string GetBinaryDir()
+{
+	char *str = new char[(1 << 16)];
+	bzero(str, (1 << 16));
+
+	auto r = readlink("/proc/self/exe", str, (1 << 16) - 1);
+	str = reinterpret_cast<char*>(realloc(str, r));
+	str[r] = 0;
+	str = dirname(str);
+	Flux::string ret = str;
+	delete [] str;
+	return ret;
+}
 
 void OpenListener(int sock_fd)
 {
@@ -56,8 +72,19 @@ void OpenListener(int sock_fd)
 			// Attempt to completely match a URL and run it
 			if (std::regex_match(url, std::regex(it.first)))
 			{
+				if (protocoldebug)
+					Log(LOG_DEBUG) << "Found a regex (" << it.first << ") matching url " << url;
+
 				if (it.second->Run(r, url))
+				{
 					foundmatch = true;
+					break;
+				}
+			}
+			else
+			{
+				if (protocoldebug)
+					Log(LOG_DEBUG) << "A regex matching URL " << url << " not found!";
 			}
 		}
 
@@ -73,10 +100,14 @@ void OpenListener(int sock_fd)
 	FCGX_Free(&request, sock_fd);
 }
 
+extern void LoadModules();
+
 int main(int argc, char **argv)
 {
 	std::vector<Flux::string> args(argv, argv + argc);
 	quit = false;
+
+	binary_dir = GetBinaryDir();
 
 	// Parse our config before anything
 	Config conf("atf.conf");
@@ -112,6 +143,10 @@ int main(int argc, char **argv)
 
 	// Start running the bots from the database.
 	Network::Initialize();
+
+	// Load our modules now that most of the system is initialized, this may need to be moved
+	// depending on the kind of modules we're using
+	LoadModules();
 
 	printf("Idling main thread.\n");
 	while (!quit)

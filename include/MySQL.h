@@ -8,18 +8,6 @@
 #include <string>
 #include <cstring>
 
-// Prevents mysql from typedefing something not used and will throw errros
-// this is stupid but it works
-#define HAVE_INT32
-
-// Mysql
-#include <mysql/my_global.h>
-#include <mysql/mysql.h>
-
-// Fixes for mysql-specific defines which we don't use
-#undef VERSION
-#undef int32
-
 #include "flux.h"
 #include "EventDispatcher.h"
 
@@ -60,6 +48,14 @@ public:
 
 class MySQL
 {
+	// Because including my_global.h defines a bunch of shit we don't fucking want
+	// (and thanks MySQL for making it impossible to disable these generically-named global items)
+	// we must rely upon the linker to resolve this type to the proper pointer type.
+	// it is only used internally in MySQL.cpp for actual connection info and this just defines
+	// the C++ type but this means that this class is the ONLY way you can interact with MySQL.
+	// Boy do I love working around shittily programmed libraries.
+	typedef struct st_mysql MYSQL;
+
 	// MySQL connection object
 	MYSQL *con;
 

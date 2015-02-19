@@ -78,6 +78,7 @@
 %token LOG
 %token FILENAME
 %token COLOR
+%token MODDIR
 
 
 /*%token SERVER
@@ -129,7 +130,7 @@ LOG_entry: LOG
 
  /* Section items. */
 server_items: | server_item server_items;
-server_item: server_daemonize | server_pidfile | server_port | server_bind | server_timeout;
+server_item: server_daemonize | server_pidfile | server_port | server_bind | server_timeout | server_moddir
 
 MySQL_items: | MySQL_item MySQL_items;
 MySQL_item: MySQL_host | MySQL_port | MySQL_username | MySQL_database | MySQL_password | MySQL_retrytimes;
@@ -151,14 +152,13 @@ log_item: log_age | log_filename | log_color;
  /* Actually defining sections and such */
 module_path: PATH '=' STR ';'
 {
-/* 	curmod->path = strdup(yylval.sval); */
+
 };
 
 module_name: NAME '=' STR ';'
 {
 /* 	curmod->name = strdup(yylval.sval); */
 };
-
 
 
 
@@ -337,4 +337,9 @@ server_bind: BIND '=' STR ';'
 server_timeout: TIMEOUT '=' CINT ';'
 {
 	ctx->SockWait = yyla.value.ival;
+};
+
+server_moddir: MODDIR '=' STR ';'
+{
+	ctx->ModuleDir = yyla.value.sval;
 };

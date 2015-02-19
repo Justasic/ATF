@@ -29,6 +29,7 @@ Flux::string SanitizeXML(const Flux::string &str)
     }
 	special[] = {
 		chars("&amp;", "&"),
+		chars("&apos;", "'"),
 		chars("&quot;", "\""),
 		chars("&lt;", "<"),
 		chars("&gt;", ">"),
@@ -65,10 +66,9 @@ public:
 	{
 		if (r.GetType() == "POST")
 		{
-			std::vector<char> buffer;
-
 			uint8_t *buf = new uint8_t[1024];
 			size_t len = r.ReadData(buf, 1024);
+			std::vector<char> buffer(buf, buf+len);
 
 			while (len == 1024)
 			{
@@ -77,8 +77,6 @@ public:
 			}
 
 			delete [] buf;
-
-			buffer.push_back(0);
 
 			return HandleMessage(Flux::string(buffer.begin(), buffer.end()));
 		}
@@ -105,13 +103,18 @@ bool XMLRPC::HandleMessage(const Flux::string &content)
 
 	Log(LOG_TERMINAL) << "[XML-RPC] Message Handler Called!";
 
+
 	Flux::string blah = SanitizeXML(content);
+	Log(LOG_TERMINAL) << "\n" << blah;
+
 
 	// Strip out all the XML garbage we don't need since RapidXML will crash if we don't
 	size_t pos1 = blah.find("<?");
-	size_t pos2 = blah.find("<message>");
+	size_t pos2 = blah.find("?>");
 
-	blah = blah.erase(pos1, pos2).replace_all_cs("  ", " ");
+	blah = blah.erase(pos1, pos2+2).replace_all_cs("  ", " ");
+
+
 
 	try
 	{
@@ -122,7 +125,12 @@ bool XMLRPC::HandleMessage(const Flux::string &content)
 		doc.parse<0>(blah.cc_str());
 
 		// Attempt to get the first node of the commit.
-		rapidxml::xml_node<> *main_node = doc.first_node("message", 0, true);
+		rapidxml::xml_node<> *main_node = doc.first_node("methodCall", 0, true)->
+									  				 first_node("params", 0, true)->
+				                                     first_node("param", 0, true)->
+				                                     first_node("value", 0, true)->
+				                                     first_node("string", 0, true)->
+				                                     first_node("message", 0, true);
 		if(!main_node)
 		{
 			Log(LOG_TERMINAL) << "Invalid XML data!";
@@ -202,7 +210,7 @@ bool XMLRPC::HandleMessage(const Flux::string &content)
 		// remove everything from memory
 		doc.clear();
 
-		for(auto IT : Networks)
+		for(auto IT : Network::Networks)
 		{
 			for(auto it : IT.second->ChanMap)
 				message.Channels.push_back(it.second);

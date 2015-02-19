@@ -1,9 +1,12 @@
+#define _XOPEN_SOURCE 700
 #include "flux.h"
 #include "file.h"
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <libgen.h>
+#include <string.h>
 
 // Read from the file
 size_t File::Read(void *buffer, size_t len)
@@ -110,10 +113,6 @@ FILE *File::GetFILE()
 
 File *FileSystem::OpenFile(const Flux::string &path, fsMode_t mode)
 {
-	// Make sure the file exists
-	if (!IsFile(path))
-		return nullptr;
-
 	// Calculate flags
 	int flags = 0;
 
@@ -134,10 +133,22 @@ File *FileSystem::OpenFile(const Flux::string &path, fsMode_t mode)
 	// Open the file.
 	f->fd = open(path.c_str(), flags);
 
-	if (f->fd == -1)
+	// Try adding O_CREAT to the list.
+	if (f->fd == -1 && errno == ENOENT)
+	{
+		f->fd = open(path.c_str(), flags | O_CREAT);
+		if (f->fd == -1)
+			goto fail;
+	}
+	else if (f->fd == -1)
+	{
+fail:
+		printf("Could not open file \"%s\": %s\n", path.c_str(), strerror(errno));
+		delete f;
 		// we had an error. Errno was set.
 		// TODO: Throw an exception here.
 		return nullptr;
+	}
 
 	f->path = path;
 
@@ -204,6 +215,9 @@ void FileSystem::CloseFile(File *f)
 
 bool FileSystem::CopyFile(File *dest, File *src)
 {
+
+	printf("=============Copying %s to %s\n", src->GetPath().c_str(), dest->GetPath().c_str());
+
 	if (!dest || !src)
 		return false;
 
@@ -232,10 +246,10 @@ bool FileSystem::IsDirectory(const Flux::string &str)
 	if (stat(str.c_str(), &fileinfo) == 0)
 	{
 		if (S_ISDIR(fileinfo.st_mode))
-			return false;
+			return true;
 	}
 
-	return true;
+	return false;
 }
 
 bool FileSystem::IsFile(const Flux::string &file)
@@ -357,4 +371,28 @@ Flux::vector FileSystem::DirectoryList(const Flux::string &dir)
 	files.insert(files.end(), tmp.begin(), tmp.end());
 
 	return files;
+}
+
+Flux::string FileSystem::Dirname(const Flux::string &str)
+{
+	if (str.empty())
+		return "";
+
+	char *strr = strndup(str.c_str(), str.size());
+	char *cstr = dirname(strr);
+	Flux::string ret(cstr);
+	free(strr);
+	return ret;
+}
+
+Flux::string FileSystem::Basename(const Flux::string &str)
+{
+	if (str.empty())
+		return "";
+
+	char *strr = strndup(str.c_str(), str.size());
+	char *cstr = basename(strr);
+	Flux::string ret(cstr);
+	free(strr);
+	return ret;
 }

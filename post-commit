@@ -76,7 +76,7 @@ $dest_email = 'cia@cia.flux-net.net';
 # If using XML-RPC, connect to this URI
 #$rpc_uri = `git config hooks.cia-rpc-uri`;
 #chomp($rpc_uri);
-$rpc_uri = 'http://localhost:3910/'; #unless $rpc_uri;
+$rpc_uri = 'http://localhost/RPC2'; #unless $rpc_uri;
 
 # Path to your USCD sendmail compatible binary (your mailer daemon created this
 # program somewhere).
