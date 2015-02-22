@@ -65,6 +65,8 @@ public:
 
             r.Write("</tbody>");
             r.Write("</table>");
+            r.Write("<button>Submit</button>");
+            r.Write("</form>");
 
             r.Write("</html>");
             return true;
