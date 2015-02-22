@@ -37,6 +37,8 @@ public:
 
             r.Write("<h2>Module List</h2>");
 
+            r.Write("<h6>Loaded Modules</h6><hr />");
+
             r.Write("<form action=\"#\">");
             r.Write("<table class=\"u-full-width\">");
             r.Write("<thread>");
@@ -44,6 +46,7 @@ public:
             r.Write("<th>Module</th>");
             r.Write("<th>Author</th>");
             r.Write("<th>Version</th>");
+            r.Write("<th>Permanent</th>");
             r.Write("<th>Delete</th>");
             r.Write("</tr>");
             r.Write("</thread>");
@@ -55,6 +58,7 @@ public:
                 r.Write("<td><a href=\"/modules/%s\">%s</a></td>", it->name, it->name);
                 r.Write("<td>%s</td>", it->GetAuthor());
                 r.Write("<td>%s</td>", it->GetVersion());
+                r.Write("<td>%s</td>", it->GetPermanent() ? "Yes" : "No");
                 r.Write("<td><input type=\"checkbox\" id=\"%s\">", it->name);
                 r.Write("</tr>");
             }
