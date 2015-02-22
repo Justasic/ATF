@@ -32,7 +32,8 @@ public:
 			r.Write("<link rel=\"stylesheet\" href=\"/static/css/normalize.css\">");
 			r.Write("</head>");
 			r.Write("<center><h2>Hello World!</h2>");
-			r.Write("<a href=\"/modules/\">Module List</a></center>");
+			r.Write("<a href=\"/modules/\">Module List</a><br />");
+			r.Write("<a href=\"/bots/\">Bot List</a></center>");
 			r.Write("</html>");
 			return true;
 		}

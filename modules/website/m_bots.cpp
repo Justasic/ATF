@@ -12,12 +12,10 @@
 #include "modules.h"
 
 
-
-
-class ListModules : public Page
+class BotList : public Page
 {
 public:
-    ListModules(Module *m) : Page(m, "^/modules/(.*)")
+    BotList(Module *m) : Page(m, "^/bots/(.*)")
     {
     }
 
@@ -30,45 +28,39 @@ public:
             r.Write("<html>");
 
             r.Write("<head>");
-            r.Write("<title>Loaded Modules - ATF</title>");
+            r.Write("<title>Overview - ATF</title>");
             r.Write("<link rel=\"stylesheet\" href=\"/static/css/skeleton.css\">");
             r.Write("<link rel=\"stylesheet\" href=\"/static/css/normalize.css\">");
             r.Write("<link rel=\"stylesheet\" href=\"/static/css/basic.css\">");
             r.Write("</head>");
 
-            r.Write("<h2>Module List</h2>");
-
-
+            r.Write("<h1>Bot List</h1>");
             r.Write("<article><div class=\"box\">");
-            r.Write("<h6>Loaded Modules</h6>");
-            r.Write("<form action=\"#\">");
+            r.Write("<h6>Active Bots</h6>");
             r.Write("<table class=\"u-full-width\">");
             r.Write("<thread>");
             r.Write("<tr>");
-            r.Write("<th>Module</th>");
-            r.Write("<th>Author</th>");
-            r.Write("<th>Version</th>");
-            r.Write("<th>Permanent</th>");
-            r.Write("<th>Delete</th>");
+            r.Write("<th>Nickname</th>");
+            r.Write("<th>Network</th>");
+            r.Write("<th>More info</th>");
             r.Write("</tr>");
             r.Write("</thread>");
             r.Write("<tbody>");
 
-            for (auto it : Modules)
+            for (auto it : Network::Networks)
             {
-                r.Write("<tr>");
-                r.Write("<td><a href=\"/modules/%s\">%s</a></td>", it->name, it->name);
-                r.Write("<td>%s</td>", it->GetAuthor());
-                r.Write("<td>%s</td>", it->GetVersion());
-                r.Write("<td>%s</td>", it->GetPermanent() ? "Yes" : "No");
-                r.Write("<td><input type=\"checkbox\" id=\"%s\">", it->name);
-                r.Write("</tr>");
+                for (auto bot : it.second->Bots)
+                {
+                    r.Write("<tr>");
+                    r.Write("<td>%s</a></td>", bot.first);
+                    r.Write("<td>%s</td>", it.first);
+                    r.Write("<td><a href=\"/bots/%s/%s\">%s</a></td>", it.first, bot.first);
+                    r.Write("</tr>");
+                }
             }
 
             r.Write("</tbody>");
             r.Write("</table>");
-            r.Write("<button>Submit</button>");
-            r.Write("</form>");
             r.Write("</div></article>");
 
             r.Write("</html>");
@@ -79,19 +71,19 @@ public:
     }
 };
 
-class m_modules : public Module
+class m_bots : public Module
 {
-    ListModules mlist;
+    BotList bots;
 public:
-    m_modules(const Flux::string &Name) : Module(Name, MOD_NORMAL), mlist(this)
+    m_bots(const Flux::string &Name) : Module(Name, MOD_NORMAL), bots(this)
     {
         this->SetAuthor("Justasic");
         this->SetVersion(VERSION);
     }
 
-    ~m_modules()
+    ~m_bots()
     {
     }
 };
 
-MODULE_HOOK(m_modules)
+MODULE_HOOK(m_bots)
