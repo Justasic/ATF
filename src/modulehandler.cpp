@@ -66,10 +66,9 @@ ModErr ModuleHandler::LoadModule(const Flux::string &modname)
 	if(FindModule(modname))
 		return MOD_ERR_EXISTS;
 
-	Log() << "\033[0m[\033[1;32m*\033[0m] Loading Module:\t\033[1;32m" << modname << config->LogColor;
+	Log() << "\033[0m[\033[1;32m*\033[0m] Loading Module:\t\033[1;32m" << modname << "\033[0m" << config->LogColor;
 
 	Flux::string modbasename = FileSystem::Basename(modname);
-	tfm::printf("modbasename: %s\n", modbasename);
 
 	Flux::string mdir = binary_dir + "/runtime/" + (modbasename.search(".so") ? modbasename : modbasename + ".so");
 	Flux::string input = modname;
@@ -108,7 +107,7 @@ ModErr ModuleHandler::LoadModule(const Flux::string &modname)
 	Module *m;
 	try
 	{
-		m = f(modname);
+		m = f(modbasename);
 	}
 	catch (const ModuleException &e)
 	{
@@ -226,6 +225,7 @@ Module *ModuleHandler::FindModule(const Flux::string &name)
 void LoadModules()
 {
 	ModuleHandler::SanitizeRuntime();
+	Log(LOG_DEBUG) << "Loading modules...";
 	auto files = FileSystem::DirectoryList(config->ModuleDir);
 
     for(unsigned i = 0; i < files.size(); ++i)

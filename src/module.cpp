@@ -28,7 +28,7 @@ Module::Module(const Flux::string &n, ModType m): author(""), version(""), loadt
 		throw ModuleException("Module already exists!");
 
     Modules.push_back(this);
-	Log() << "Loaded Module " << n;
+	//Log() << "Loaded Module " << n;
 }
 
 Module::~Module()

@@ -939,10 +939,10 @@ void format(std::ostream& out, const char* fmt, const Args&... args)
 /// Format list of arguments according to the given format string and return
 /// the result as a string.
 template<typename... Args>
-Flux::string format(const char* fmt, const Args&... args)
+Flux::string format(const Flux::string &fmt, const Args&... args)
 {
     std::ostringstream oss;
-    format(oss, fmt, args...);
+    format(oss, fmt.c_str(), args...);
     return oss.str();
 }
 

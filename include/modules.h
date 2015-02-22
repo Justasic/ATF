@@ -29,7 +29,7 @@
 extern "C" Module *ModInit(const Flux::string &name) { return new x(name); } \
 extern "C" void ModunInit(x *m) { delete m; }
 
-
+extern std::list<Module*> Modules;
 // extern void startup(int argc, char** argv, char *envp[]);
 // extern void Rehash();
 // extern Flux::string execute(const char *cmd);

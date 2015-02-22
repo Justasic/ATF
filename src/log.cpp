@@ -192,19 +192,19 @@ Log::~Log()
 			break;
 		case LOG_THREAD:
 			if(protocoldebug)
-			logstream << TimeStamp() << " [THREAD] " << message;
+				logstream << TimeStamp() << " [THREAD] " << message;
 			break;
 		case LOG_DEBUG:
 			//if(dev || protocoldebug)
 			logstream << TimeStamp() << " " << message;
 			break;
 		case LOG_DNS:
-		//	if(protocoldebug)
-			logstream << TimeStamp() << " \033[34;0m[DNSEngine]" << LogColor << " " << message;
+			if(protocoldebug)
+				logstream << TimeStamp() << " \033[34;0m[DNSEngine]" << LogColor << " " << message;
 			break;
 		case LOG_RAWIO:
-		//	if(protocoldebug)
-			logstream << TimeStamp() << " " << message;
+			if(protocoldebug)
+				logstream << TimeStamp() << " " << message;
 			break;
 		case LOG_CRITICAL:
 			logstream << "\033[22;31m" << TimeStamp() << " [CRITICAL] " << message << LogColor;

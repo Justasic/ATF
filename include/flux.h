@@ -43,7 +43,6 @@ extern bool protocoldebug;
 template<typename type_name, typename value> inline type_name value_cast(const value &y)
 {
 	std::stringstream stream;
-	type_name nullpointer;
 	type_name x;
 	if(!(stream << std::setprecision(1000) << y)) // use setprecision so scientific notation does not get in the way.
 		throw;
@@ -51,7 +50,7 @@ template<typename type_name, typename value> inline type_name value_cast(const v
 	{
 		if(protocoldebug)
 			printf("Failed to cast \"%s\" to \"%s\"\n", typeid(value).name(), typeid(type_name).name());
-		return nullpointer;
+		return type_name();
 	}
 	return x;
 }

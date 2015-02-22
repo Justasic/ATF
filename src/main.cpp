@@ -58,13 +58,16 @@ void OpenListener(int sock_fd)
 	// Idle infinitely and accept requests.
 	while(FCGX_Accept_r(&request) == 0)
 	{
-		printf("Thread %d handling request\n", ThreadHandler::GetThreadID());
+		Log(LOG_DEBUG).format("Thread %d handling request\n", ThreadHandler::GetThreadID());
 		Request r(&request);
 
 		// Handle the pages
 		extern std::map<std::string, Page*> PageMap;
 		// Get the request URI from the server
 		std::string url = r.GetParam("SCRIPT_NAME").c_str();
+
+		Log(LOG_DEBUG) << " `- URL: " << url;
+
 		bool foundmatch = false;
 		// Iterate over all our pages
 		for (auto it : PageMap)
@@ -73,7 +76,7 @@ void OpenListener(int sock_fd)
 			if (std::regex_match(url, std::regex(it.first)))
 			{
 				if (protocoldebug)
-					Log(LOG_DEBUG) << "Found a regex (" << it.first << ") matching url " << url;
+					Log(LOG_DEBUG) << "Found a regex " << it.first << " matching url " << url;
 
 				if (it.second->Run(r, url))
 				{
@@ -84,7 +87,7 @@ void OpenListener(int sock_fd)
 			else
 			{
 				if (protocoldebug)
-					Log(LOG_DEBUG) << "A regex matching URL " << url << " not found!";
+					Log(LOG_DEBUG) << "Regex " << it.first << " does not match URL: " << url;
 			}
 		}
 
@@ -148,7 +151,7 @@ int main(int argc, char **argv)
 	// depending on the kind of modules we're using
 	LoadModules();
 
-	printf("Idling main thread.\n");
+	Log(LOG_DEBUG) << "Idling main thread.\n";
 	while (!quit)
 	{
 		// Check database connection first

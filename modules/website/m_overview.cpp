@@ -29,7 +29,8 @@ public:
 			r.Write("<head>");
 			r.Write("<title>Hello World!</title>");
 			r.Write("</head>");
-			r.Write("<center><h2>Hello World!</h2></center>");
+			r.Write("<center><h2>Hello World!</h2>");
+			r.Write("<a href=\"/modules/\">Module List</a></center>");
 			r.Write("</html>");
 			return true;
 		}
